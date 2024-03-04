@@ -68,25 +68,15 @@ let svg = d3.select("body").append("svg")
 let i = 0,
     duration = 750,
     root,
-    treeData;
+    treeData, nodes;
 
 // Declares a tree layout and assigns the size
 var treemap = d3.tree().size([width, height]);
 
-// virtueller bst -> visueller bst
-// jeder Knoten hat folgende Eigenschaften:
-// node.data - the associated data as passed to hierarchy
-// node.depth - zero for the root, increasing by one for each descendant generation
-// node.height - the greatest distance from any descendant leaf, or zero for leaves
-// node.parent - the parent node, or null for the root node
-// node.children - an array of child nodes, if any, or undefined for leaves
-// node.value - the optional summed value of the node and its descendants
-
-
+updateHierarchy()
 
 function updateHierarchy() {
     root = d3.hierarchy(binarySearchTree.root, function (d) {
-
         d.children = [];
         if (d.left) {
             d.children.push(d.left);
@@ -103,50 +93,72 @@ function updateHierarchy() {
         }
         return d.children;
     });
+
+    root.x0 = width / 2;
+    root.y0 = 0;
     treeData = treemap(root);
 }
 
-updateHierarchy()
+insertNewNodes(root);
 
-root.x0 = width / 2;
-root.y0 = 0;
+function updatePositionForAllNodes(source) {
+    svg.selectAll("g.node")
+    .transition()
+    .duration(duration)
+        .attr("transform", function (d) {
+            return "translate(" + d.x + "," + d.y + ")"})
+}
 
-update(root);
+function updatePositionForAllLinks(source) {
+    var link = svg.selectAll('path.link')
+        .transition()
+        .duration(duration)
+        .attr('d', function (d) { return drawDiagonal(d, d.parent) })
+}
 
 
-function update(source) {
-    // Assigns the x and y position for the nodes
+function insertNewNodes(root) {
+    drawNodes(root)
+    drawLinks(root)
+}
 
-    // root node has no links to, so - 1 element
-    var nodes = treeData.descendants(),
-        links = treeData.descendants().slice(1);
+function drawNodes(source) {
+    oldNodes = nodes
+    nodes = treeData.descendants()
 
-    // Normalize for fixed-depth
+    console.log(oldNodes);
+    console.log(nodes)
+
     nodes.forEach(function (node) {
         node.y = node.depth * 100
     });
 
-    // **************** Nodes Section ****************
-
-    // ID of Node = Value (means no duplicates!!)
-    // g.node gibt nichts zurück, deswegen wird in .enter() alle nodes gespeichert, die 
-    // nicht in der <G>ruppe sind
     var node = svg.selectAll('g.node')
-        .data(nodes, function (individualNode) { return individualNode.id = individualNode.data.key })
+        .data(nodes, function (individualNode) { 
+            if (individualNode.data.key == "empty") {
+                return individualNode.id = "empty-" + individualNode.parent.data.key
+            }
+            return individualNode.id = individualNode.data.key })
         .enter()
         .append("g")
         .attr("class", "node")
         //schöne Ausfächerung der Knoten, beginnend bei der Wurzel
         .attr("transform", function (d) {
             if (d.parent != null) {
-                return `translate(${d.parent.x}, ${d.parent.y})`    
+                return `translate(${d.parent.x}, ${d.parent.y})`
             }
             return `translate(${source.x0}, ${source.y0})`
         });
 
+        console.log("node");
+        console.log(node);
+
+
     node.append("circle")
         .attr("class", function (d) {
-            if (d.id == "empty") {
+            let regex = /^empty-.*$/;
+            let value = ""+ d.id
+            if (value.match(regex)) {
                 return "node-empty"
             }
             return "node"
@@ -167,24 +179,20 @@ function update(source) {
     node.select('circle.node')
         .attr('r', 20)
         .attr("id", function (d) {
-            if (d.id === "empty") {
+            if (d.id == "empty") {
                 return;
             }
             return "node-" + d.id
         })
         .attr('cursor', 'pointer');
 
-        node.select('circle.node-empty')
+    node.select('circle.node-empty')
         .attr('r', 20)
-        .attr("id", function (d) {
-            if (d.id === "e") {
-                return;
-            }
-            return "node-" + d.id
-        })
         .attr('cursor', 'pointer');
+}
 
-    // Update the links...
+function drawLinks(source) {
+    links = treeData.descendants().slice(1);
     var link = svg.selectAll('path.link')
         .data(links, function (d) { return d.id; })
         .enter()
@@ -200,9 +208,6 @@ function update(source) {
             }
             return drawDiagonal(o, o);
         })
-
-    console.log("link");
-    console.log(link);
 
     // Transition back to the parent element position
     link.transition()
@@ -226,8 +231,7 @@ function insertNode() {
         alert("Wert muss Zahl (< 1000) sein!");
         return
     }
-    binarySearchTree.insert(new Node(value))
-    binarySearchTree.inOrderWalk(binarySearchTree.root)
+    binarySearchTree.insert(new Node(new Number(value)))
     updateHierarchy()
     update(root)
 }
@@ -240,51 +244,12 @@ function search() {
         return
     }
 
-    let node = root.data;
-    console.log("root.data");
-    console.log(root.data);
-    let finalNode = paintNodes(node, value)
-    if (finalNode == null) {
-        binarySearchTree.insert(new Node(new Number(value)))
-        updateHierarchy()
-        update(root)
-    }
+    binarySearchTree.insert(new Node(new Number(value)))
+    updateHierarchy()
+    insertNewNodes(root)
+    updatePositionForAllNodes(root)
+    updatePositionForAllLinks(root)
 }
 
 
-function paintNodes(root, number) {
-    let node = root;
-    let value = Number(number)
-    while (node != null && node.key != value) {
-        d3.select("#node-" + node.key).transition().duration(400)
-            .style("fill", "green")
-        if (value <= node.key) {
-            d3.select("#node-" + node.key).transition().duration(400).delay(600)
-                .style("fill", "#a8e3e3")
-            node = node.left
-            if (node != null) {
-                d3.select("#link-" + node.parent.key + node.key).transition().duration(600).delay(800)
-                    .style("stroke", "green")
-                d3.select("#link-" + node.parent.key + node.key).transition().duration(600).delay(1600)
-                    .style("stroke", "#ccc")
-                d3.select("#node-" + node.key).transition().duration(600).delay(2400)
-                    .style("fill", "green")
-            }
-        }
-        else {
-            d3.select("#node-" + node.key).transition().duration(600).delay(800)
-                .style("fill", "#a8e3e3")
-            node = node.right
-            if (node != null) {
-                d3.select("#link-" + node.parent.key + node.key).transition().duration(600).delay(800)
-                    .style("stroke", "green")
-                d3.select("#link-" + node.parent.key + node.key).transition().duration(600).delay(1600)
-                    .style("stroke", "#ccc")
-                d3.select("#node-" + node.key).transition().duration(600).delay(2400)
-                    .style("fill", "green")
-            }
-        }
-    }
-    return node
-}
 
