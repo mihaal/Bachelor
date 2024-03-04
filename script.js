@@ -47,7 +47,7 @@ let marginTop = 40,
     width = window.innerWidth,
     height = 540;
 
-let numbers = [23, 10, 24, 243, 5, 6];
+let numbers = [];
 
 let binarySearchTree = new BinarySearchTree();
 
@@ -103,10 +103,11 @@ insertNewNodes(root);
 
 function updatePositionForAllNodes(source) {
     svg.selectAll("g.node")
-    .transition()
-    .duration(duration)
+        .transition()
+        .duration(duration)
         .attr("transform", function (d) {
-            return "translate(" + d.x + "," + d.y + ")"})
+            return "translate(" + d.x + "," + d.y + ")"
+        })
 }
 
 function updatePositionForAllLinks(source) {
@@ -126,22 +127,27 @@ function drawNodes(source) {
     oldNodes = nodes
     nodes = treeData.descendants()
 
-    console.log(oldNodes);
-    console.log(nodes)
-
     nodes.forEach(function (node) {
         node.y = node.depth * 100
     });
 
     var node = svg.selectAll('g.node')
-        .data(nodes, function (individualNode) { 
+        .data(nodes, function (individualNode) {
             if (individualNode.data.key == "empty") {
                 return individualNode.id = "empty-" + individualNode.parent.data.key
             }
-            return individualNode.id = individualNode.data.key })
+            return individualNode.id = individualNode.data.key
+        })
         .enter()
         .append("g")
         .attr("class", "node")
+        .attr("id", function (d) {
+            let regex = /^empty-.*$/;
+            let value = "" + d.id
+            if (value.match(regex)) {
+                return "node-empty-" + d.parent.id
+            }
+        })
         //schöne Ausfächerung der Knoten, beginnend bei der Wurzel
         .attr("transform", function (d) {
             if (d.parent != null) {
@@ -150,14 +156,11 @@ function drawNodes(source) {
             return `translate(${source.x0}, ${source.y0})`
         });
 
-        console.log("node");
-        console.log(node);
-
 
     node.append("circle")
         .attr("class", function (d) {
             let regex = /^empty-.*$/;
-            let value = ""+ d.id
+            let value = "" + d.id
             if (value.match(regex)) {
                 return "node-empty"
             }
@@ -168,7 +171,14 @@ function drawNodes(source) {
     node.append("text")
         .attr("dy", ".35em")
         .attr("text-anchor", "middle")
-        .text(function (individualNode) { return individualNode.id; });
+        .text(function (d) { 
+            let regex = /^empty-.*$/;
+            let value = "" + d.id
+            if (value.match(regex)) {
+                return "empty"
+            }
+            return d.id
+         });
 
     node.transition()
         .duration(duration)
@@ -189,6 +199,12 @@ function drawNodes(source) {
     node.select('circle.node-empty')
         .attr('r', 20)
         .attr('cursor', 'pointer');
+
+    if (oldNodes != null && oldNodes.length == nodes.length) {
+        let valueOfParent = node._groups[0].filter(n => n)[0].__data__.parent.id;
+        svg.selectAll("#node-empty-" + valueOfParent).remove()
+        svg.selectAll(`#link-${valueOfParent}empty-${valueOfParent}`).remove()
+    }
 }
 
 function drawLinks(source) {
