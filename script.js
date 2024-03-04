@@ -47,7 +47,7 @@ let marginTop = 40,
     width = window.innerWidth,
     height = 540;
 
-let numbers = [23, 10, 24, 243, 5, 6, 3, 1, 4, 465, 324, 12, 34, 45, 56, 67, 78];
+let numbers = [23, 10, 24, 243, 5, 6];
 
 let binarySearchTree = new BinarySearchTree();
 
@@ -90,12 +90,20 @@ function updateHierarchy() {
         d.children = [];
         if (d.left) {
             d.children.push(d.left);
+            if (myXOR(d.left, d.right)) {
+                d.children.push(new Node("empty"));
+            }
         }
         if (d.right) {
+            if (myXOR(d.left, d.right)) {
+                d.children.push(new Node("empty")
+                );
+            }
             d.children.push(d.right);
         }
         return d.children;
     });
+    treeData = treemap(root);
 }
 
 updateHierarchy()
@@ -105,23 +113,13 @@ root.y0 = 0;
 
 update(root);
 
-// Update
-
 
 function update(source) {
     // Assigns the x and y position for the nodes
-    treeData = treemap(root);
-    console.log("tree Map")
-    console.log(treeData)
 
     // root node has no links to, so - 1 element
     var nodes = treeData.descendants(),
         links = treeData.descendants().slice(1);
-
-    console.log("nodes")
-    console.log(nodes)
-    console.log("links")
-    console.log(links)
 
     // Normalize for fixed-depth
     nodes.forEach(function (node) {
@@ -138,20 +136,27 @@ function update(source) {
         .enter()
         .append("g")
         .attr("class", "node")
-        .attr("transform", `translate(${source.x0}, ${source.y0})`);
-
+        //schöne Ausfächerung der Knoten, beginnend bei der Wurzel
+        .attr("transform", function (d) {
+            if (d.parent != null) {
+                return `translate(${d.parent.x}, ${d.parent.y})`    
+            }
+            return `translate(${source.x0}, ${source.y0})`
+        });
 
     node.append("circle")
-        .attr("class", "node")
+        .attr("class", function (d) {
+            if (d.id == "empty") {
+                return "node-empty"
+            }
+            return "node"
+        })
 
     // Text in Knoten mit Data/ID
     node.append("text")
         .attr("dy", ".35em")
         .attr("text-anchor", "middle")
         .text(function (individualNode) { return individualNode.id; });
-
-    console.log("node:");
-    console.log(node);
 
     node.transition()
         .duration(duration)
@@ -162,9 +167,21 @@ function update(source) {
     node.select('circle.node')
         .attr('r', 20)
         .attr("id", function (d) {
+            if (d.id === "empty") {
+                return;
+            }
             return "node-" + d.id
         })
-        .style("fill", "#a8e3e3")
+        .attr('cursor', 'pointer');
+
+        node.select('circle.node-empty')
+        .attr('r', 20)
+        .attr("id", function (d) {
+            if (d.id === "e") {
+                return;
+            }
+            return "node-" + d.id
+        })
         .attr('cursor', 'pointer');
 
     // Update the links...
@@ -176,9 +193,12 @@ function update(source) {
         .attr("id", function (d) {
             return "link-" + d.parent.id + d.id
         })
-        .attr('d', function () {
+        .attr('d', function (d) {
             var o = { x: source.x0, y: source.y0 };
-            return diagonal(o, o);
+            if (d.parent != null) {
+                var o = { x: d.parent.x, y: d.parent.y };
+            }
+            return drawDiagonal(o, o);
         })
 
     console.log("link");
@@ -187,12 +207,16 @@ function update(source) {
     // Transition back to the parent element position
     link.transition()
         .duration(duration)
-        .attr('d', function (d) { return diagonal(d, d.parent) });
+        .attr('d', function (d) { return drawDiagonal(d, d.parent) });
 }
 
 // M = Move To = Startpunkt x0 y0 -> Endpunkt x1 y1
-function diagonal(s, d) {
-    return `M ${s.x} ${s.y} ${d.x} ${d.y} `;
+function drawDiagonal(start, end) {
+    return `M ${start.x} ${start.y} ${end.x} ${end.y} `;
+}
+
+function myXOR(a, b) {
+    return (a || b) && !(a && b);
 }
 
 function insertNode() {
@@ -219,10 +243,12 @@ function search() {
     let node = root.data;
     console.log("root.data");
     console.log(root.data);
-    d3.select("#node-" + node.key).transition().duration(400)
-        .style("fill", "green")
     let finalNode = paintNodes(node, value)
-    console.log(finalNode);
+    if (finalNode == null) {
+        binarySearchTree.insert(new Node(new Number(value)))
+        updateHierarchy()
+        update(root)
+    }
 }
 
 
@@ -230,6 +256,8 @@ function paintNodes(root, number) {
     let node = root;
     let value = Number(number)
     while (node != null && node.key != value) {
+        d3.select("#node-" + node.key).transition().duration(400)
+            .style("fill", "green")
         if (value <= node.key) {
             d3.select("#node-" + node.key).transition().duration(400).delay(600)
                 .style("fill", "#a8e3e3")
@@ -259,3 +287,4 @@ function paintNodes(root, number) {
     }
     return node
 }
+

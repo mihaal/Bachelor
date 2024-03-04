@@ -5,8 +5,14 @@ svg {
 }
 
 .node circle {
-    fill: #fff;
+    fill: #a8e3e3;
     stroke: steelblue;
+    stroke-width: 3px;
+}
+
+.node circle.node-empty {
+    fill: #d8d8d8;
+    stroke: rgb(116, 116, 116);
     stroke-width: 3px;
 }
 
