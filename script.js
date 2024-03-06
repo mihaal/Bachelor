@@ -67,7 +67,8 @@ let svg = d3.select("body").append("svg")
 let duration = 750,
     animMultiplier = 1,
     root,
-    treeData = null, nodes, res;
+    nodes, 
+    res;
 
 // Declares a tree layout and assigns the size
 var treemap = d3.tree().size([width, height]);
@@ -249,7 +250,6 @@ function insertNode() {
     let nodeFound = search(value)
 
     res.then(() => {
-        console.log("hello");
         if (nodeFound.id != value) {
             binarySearchTree.insert(new Node(new Number(value)))
             updateHierarchy()
