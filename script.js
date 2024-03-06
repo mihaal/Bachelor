@@ -67,7 +67,7 @@ let svg = d3.select("body").append("svg")
 let duration = 750,
     animMultiplier = 1,
     root,
-    treeData = null, nodes;
+    treeData = null, nodes, res;
 
 // Declares a tree layout and assigns the size
 var treemap = d3.tree().size([width, height]);
@@ -113,7 +113,6 @@ function updatePositionForAllLinks(source) {
         .transition()
         .attr('d', function (d) { return drawDiagonal(d, d.parent) })
 }
-
 
 function insertNewNodes(root) {
     drawNodes(root)
@@ -239,7 +238,7 @@ function myXOR(a, b) {
     return (a || b) && !(a && b);
 }
 
-async function insertNode() {
+function insertNode() {
     let value = document.getElementById("numberInput").value
     let regex = /^[0-9]{1,3}$/;
     if (!value.match(regex)) {
@@ -247,63 +246,70 @@ async function insertNode() {
         return
     }
 
-    let nodeFound = await search(value)
+    let nodeFound = search(value)
 
-    console.log("hier in der insertNode");
-    if (nodeFound.id != value) {
-        binarySearchTree.insert(new Node(new Number(value)))
-        updateHierarchy()
-        insertNewNodes(root)
-        updatePositionForAllNodes(root)
-        updatePositionForAllLinks(root)
-    }
+    res.then(() => {
+        console.log("hello");
+        if (nodeFound.id != value) {
+            binarySearchTree.insert(new Node(new Number(value)))
+            updateHierarchy()
+            insertNewNodes(root)
+            updatePositionForAllNodes(root)
+            updatePositionForAllLinks(root)
+        }
+    })
 }
 
-async function search(value) {
+function search(value) {
     let animMultiplier = 1;
     let nodeIndex = root;
     while (nodeIndex != null && nodeIndex.id != value) {
-        await paintNode(nodeIndex.id, animMultiplier++, "red")
-        console.log("node fertig");
+        res = paintNode(nodeIndex.id, animMultiplier++, "red")
         if (value <= nodeIndex.id) {
-            await paintLink(nodeIndex.id + "left", animMultiplier++, "red")
             if (nodeIndex.children === undefined) {
                 break
             }
+            res = paintLink(nodeIndex.id + "left", animMultiplier++, "red")
             nodeIndex = nodeIndex.children[0]
 
         } else {
-            await paintLink(nodeIndex.id + "right", animMultiplier++, "red")
             if (nodeIndex.children === undefined) {
                 break
             }
+            res = paintLink(nodeIndex.id + "right", animMultiplier++, "red")
             nodeIndex = nodeIndex.children[1]
         }
     }
 
     if (nodeIndex.id == value) {
-        console.log("hello");
-        await paintNode(nodeIndex.id, animMultiplier++, "green")
+        res = paintNode(nodeIndex.id, animMultiplier++, "green")
     }
     return nodeIndex;
 }
 
-async function paintNode(nodeID, animMultiplier, fillColor) {
-    let node = d3.select("#node-" + nodeID)
+function paintNode(nodeID, animMultiplier, fillColor) {
 
-    await node.transition()
-        .duration(animDuration)
-        .delay(animDuration * animMultiplier)
-        .style("fill", fillColor)
-        .on("end", function () {})
-    return
+    return new Promise((resolve, reject) => {
+
+        d3.select("#node-" + nodeID)
+            .transition()
+            .duration(animDuration)
+            .delay(animDuration * animMultiplier)
+            .style("fill", fillColor)
+            .on("end", function () { resolve() })
+    })
+
 }
 
-async function paintLink(linkID, animMultiplier, fillColor) {
-    await d3.select("#link-" + linkID)
-        .transition()
-        .duration(animDuration)
-        .delay(animDuration * animMultiplier)
-        .style("stroke", fillColor)
-        .on("end", function () {})
+function paintLink(linkID, animMultiplier, fillColor) {
+
+    return new Promise((resolve, reject) => {
+
+        d3.select("#link-" + linkID)
+            .transition()
+            .duration(animDuration)
+            .delay(animDuration * animMultiplier)
+            .style("stroke", fillColor)
+            .on("end", function () { resolve() })
+    })
 }
