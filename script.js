@@ -102,7 +102,7 @@ let marginTop = 40,
     height = window.innerHeight - 100,
     animDuration = 700;
 
-let numbers = [4, 1, 6, 3];
+let numbers = [4, 1, 6, 3,7,6,12,777,888,999,776,775,0,2];
 
 let binarySearchTree = new BinarySearchTree();
 
