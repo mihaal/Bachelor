@@ -333,8 +333,8 @@ function insertNode() {
             binarySearchTree.insert(new Node(new Number(value)))
             updateHierarchy()
             insertNewNodes(root)
-            let res1 = updatePositionForAllLinks(root)
-            let res2 = updatePositionForAllNodes(root)
+            let res1 = updatePositionForAllLinks()
+            let res2 = updatePositionForAllNodes()
 
             res1.then(() => {
                 res2.then(() => {
@@ -366,24 +366,22 @@ function deleteNode() {
     res.then(() => {
         if (nodeFound.id == value) {
             binarySearchTree.delete(binarySearchTree.search(value))
-            deleteFromHierarchy(nodeFound, value)
+            deleteFromVirtualTree(nodeFound)
             updateHierarchy()
             insertNewNodes(root)
-            updatePositionForAllNodes()
-            updatePositionForAllLinks()
+            let res1 = updatePositionForAllNodes()
+            let res2 = updatePositionForAllLinks()
+            res1.then(() => {
+                res2.then(() => {
+                    resetAnimation()
+                })
+            })
         }
     })
-
 }
 
-function deleteFromHierarchy(value) {
-    let nodeToChange = root.descendants().filter((node) => node.id == value)
-    root.descendants().pop(nodeToChange)
-}
-
-function deleteLinkToDeletedNode(node) {
-    let direction = node.parent.id > node.id ? "left" : "right"
-    svg.select("#node-"+ node.parent.id + direction).remove()
+function deleteFromVirtualTree(nodeToDelete) {
+    console.log(nodeToDelete);
 }
 
 function replaceEmptyNode(idOfNode, value) {
