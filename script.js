@@ -37,7 +37,6 @@ class BinarySearchTree {
     inOrderWalk(x) {
         if (x != null) {
             this.inOrderWalk(x.left)
-            console.log(x.key)
             this.inOrderWalk(x.right)
         }
     }
@@ -244,16 +243,12 @@ function drawLinks(source) {
     link.transition()
         .duration(animDuration)
         .attr('d', function (d) {
-            console.log(d);
-            console.log(d.parent);
             return drawDiagonal(d, d.parent)
         });
 }
 
 // M = Move To = Startpunkt x0 y0 -> Endpunkt x1 y1
 function drawDiagonal(start, end) {
-    console.log(start.id + " " + end.id);
-    console.log(start.x + " " + start.y + " " + end.x + " " + end.y);
     return `M ${start.x} ${start.y} ${end.x} ${end.y} `;
 }
 
@@ -275,7 +270,6 @@ function insertNode() {
     res.then(() => {
 
         if (nodeFound.data.key == "empty") {
-            console.log("here");
             replaceEmptyNode(nodeFound.id, value)
             binarySearchTree.insert(new Node(new Number(value)))
             updateHierarchy()
