@@ -99,7 +99,7 @@ class BinarySearchTree {
 
 let marginTop = 40,
     width = window.innerWidth,
-    height = 540,
+    height = 780,
     animDuration = 700;
 
 let numbers = [4, 1, 6, 3];
@@ -367,9 +367,8 @@ function deleteNode() {
         if (nodeFound.id == value) {
             binarySearchTree.delete(binarySearchTree.search(value))
             updateHierarchy()
-            deleteFromVirtualTree(nodeFound)
-            insertNewNodes(root)
-            deleteNodeVisually(nodeFound)
+            deleteOldNodes(root)
+            deleteOldLinks(root)
             let res1 = updatePositionForAllNodes()
             let res2 = updatePositionForAllLinks()
             res1.then(() => {
@@ -381,71 +380,32 @@ function deleteNode() {
     })
 }
 
-function transPlantVirtualSubtree(u, v) {
-    if (u.parent == null) {
-        root = v
-    }
-    else if (u == u.parent.children[0]) {
-        u.parent.children[0] = v
-    }
-    else u.parent.children[1] = v
-    if (v != null) {
-        v.parent = u.parent
-    }
+function deleteOldNodes() {
+    nodes = root.descendants()
+
+    nodes.forEach(function (node) {
+        node.y = node.depth * 100
+    });
+
+    svg.selectAll('g.node')
+        .data(nodes, function (individualNode) {
+            if (individualNode.data.key == "empty") {
+                return individualNode.id = "empty-" + individualNode.parent.data.key
+            }
+            return individualNode.id = individualNode.data.key
+        })
+        .exit()
+        .remove()
 }
 
-function virtualTreeMinimum(node) {
-    while (node.children != undefined && node.children[0].data.key != "empty") {
-        node = node.children[0]
-    }
-    return node
-}
-
-function deleteFromVirtualTree(nodeToDelete) {
-    if (nodeToDelete.children == undefined) {
-        nodeToDelete.children = []
-    }
-    if (nodeToDelete.children[0] == null) {
-        transPlantVirtualSubtree(nodeToDelete, nodeToDelete.children[1])
-    }
-    else if (nodeToDelete.children[1] == null) {
-        transPlantVirtualSubtree(nodeToDelete, nodeToDelete.children[0])
-    }
-    else {
-        let y = virtualTreeMinimum(nodeToDelete.children[1])
-        y.children = []
-        if (y.parent != nodeToDelete) {
-            transPlantVirtualSubtree(y, y.children[1])
-            y.children[1] = nodeToDelete.children[1]
-            y.children[1].parent = y
-        }
-        transPlantVirtualSubtree(nodeToDelete, y)
-        y.children[0] = nodeToDelete.children[0]
-        y.children[0].parent = y
-        replaceLink(nodeToDelete.id, "right", y.parent.id, "left")
-    }
-}
-
-function replaceLink(previousRootNode, previousDirection, updatedRootNode, updatedDirection) {
-    svg.select("#link-" + previousRootNode + previousDirection)
-    .attr("id", "link-" + updatedRootNode + updatedDirection)
-}
-
-function deleteNodeVisually(node) {
-    let direction = node.id <= node.parent.id ? "left" : "right"
-    d3.select("#link-" + node.parent.id + direction).remove()
-    
-    d3.select("#node-empty-" + node.id).remove()
-    d3.select("#node-" + node.id).select(function () { return this.parentNode }).remove()
-    if (node.children.length == 0) return
-
-    if (node.children[0].data.key == "empty") {
-        d3.select("#link-" + node.id + "left").remove()
-    }
-    if (node.children[1].data.key == "empty") {
-        d3.select("#link-" + node.id + "right").remove()
-    }
-
+function deleteOldLinks() {
+    links = treeData.descendants().slice(1);
+    svg.selectAll('path.link')
+        .data(links, function (d) {
+            return d.id;
+        })
+        .exit()
+        .remove()
 }
 
 function replaceEmptyNode(idOfNode, value) {
@@ -515,7 +475,6 @@ function paintNode(nodeID, animMultiplier, fillColor) {
             .style("fill", fillColor)
             .on("end", function () { resolve() })
     })
-
 }
 
 function paintLink(linkID, animMultiplier, fillColor) {
