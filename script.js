@@ -99,7 +99,7 @@ class BinarySearchTree {
 
 let marginTop = 40,
     width = window.innerWidth,
-    height = 780,
+    height = window.innerHeight - 100,
     animDuration = 700;
 
 let numbers = [4, 1, 6, 3];
