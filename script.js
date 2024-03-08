@@ -12,6 +12,19 @@ class BinarySearchTree {
         this.root = null;
     }
 
+    search(key) {
+        let node = this.root
+        while (node != null && node.key != key) {
+            if (key <= node.key) {
+                node = node.left
+            }
+            else {
+                node = node.right
+            }
+        }
+        return node
+    }
+
     //iterative
     insert(node) {
         let y = null
@@ -37,7 +50,49 @@ class BinarySearchTree {
     inOrderWalk(x) {
         if (x != null) {
             this.inOrderWalk(x.left)
+            console.log(x.key);
             this.inOrderWalk(x.right)
+        }
+    }
+    transPlantSubtree(u, v) {
+        if (u.parent == null) {
+            this.root = v
+        }
+        else if (u == u.parent.left) {
+            u.parent.left = v
+        }
+        else {
+            u.parent.right = v
+        }
+        if (v != null) {
+            v.parent = u.parent
+        }
+    }
+
+    treeMinimum(node) {
+        while (node.left != null) {
+            node = node.left
+        }
+        return node
+    }
+
+    delete(value) {
+        if (value.left == null) {
+            this.transPlantSubtree(value, value.right)
+        }
+        else if (value.right == null) {
+            this.transPlantSubtree(value, value.left)
+        }
+        else {
+            let y = this.treeMinimum(value.right)
+            if (y.parent != value) {
+                this.transPlantSubtree(y, y.right)
+                y.right = value.right
+                y.right.parent = y
+            }
+            this.transPlantSubtree(value, y)
+            y.left = value.left
+            y.left.parent = y
         }
     }
 }
@@ -47,7 +102,7 @@ let marginTop = 40,
     height = 540,
     animDuration = 700;
 
-let numbers = [4, 1, 5, 3];
+let numbers = [4, 1, 6, 3];
 
 let binarySearchTree = new BinarySearchTree();
 
@@ -110,7 +165,6 @@ function updatePositionForAllNodes() {
             .on("end", () => {
                 resolve()
             })
-
     })
 }
 
@@ -272,7 +326,6 @@ function insertNode() {
         if (nodeFound.data.key == "empty") {
             replaceEmptyNode(nodeFound.id, value)
             binarySearchTree.insert(new Node(new Number(value)))
-            updateHierarchy()
             resetAnimation()
         }
 
@@ -290,9 +343,47 @@ function insertNode() {
             })
         }
         else {
-            resetAnimation()
+            if (nodeFound.id == value) {
+                let res3 = paintNode(nodeFound.id, animMultiplier++, "green")
+                res3.then(() => {
+                    resetAnimation()
+                })
+            }
         }
     })
+}
+
+function deleteNode() {
+    let value = document.getElementById("numberInput").value
+    let regex = /^[0-9]{1,3}$/;
+    if (!value.match(regex)) {
+        alert("Wert muss Zahl (< 1000) sein!");
+        return
+    }
+
+    let nodeFound = search(value)
+
+    res.then(() => {
+        if (nodeFound.id == value) {
+            binarySearchTree.delete(binarySearchTree.search(value))
+            deleteFromHierarchy(nodeFound, value)
+            updateHierarchy()
+            insertNewNodes(root)
+            updatePositionForAllNodes()
+            updatePositionForAllLinks()
+        }
+    })
+
+}
+
+function deleteFromHierarchy(value) {
+    let nodeToChange = root.descendants().filter((node) => node.id == value)
+    root.descendants().pop(nodeToChange)
+}
+
+function deleteLinkToDeletedNode(node) {
+    let direction = node.parent.id > node.id ? "left" : "right"
+    svg.select("#node-"+ node.parent.id + direction).remove()
 }
 
 function replaceEmptyNode(idOfNode, value) {
@@ -300,12 +391,17 @@ function replaceEmptyNode(idOfNode, value) {
     svg.select(`#node-${idOfNode}>circle`)
         .classed("node-empty", false)
         .classed("node", true)
+        .attr("id", "node-" + value)
 
     svg.select(`#node-${idOfNode}>text`)
         .text(value)
 
     svg.select(`#node-${idOfNode}`)
         .attr("id", null)
+
+    let nodeToChange = root.descendants().filter((node) => node.id == idOfNode)
+    nodeToChange[0].id = new Number(value)
+    nodeToChange[0].data.key = new Number(value)
 }
 
 function resetAnimation() {
@@ -341,6 +437,7 @@ function search(value) {
         }
     }
 
+    // needs to be inside here bc of animMultiplier
     if (nodeIndex.id == value) {
         res = paintNode(nodeIndex.id, animMultiplier++, "green")
     }
@@ -348,7 +445,6 @@ function search(value) {
 }
 
 function paintNode(nodeID, animMultiplier, fillColor) {
-
     return new Promise((resolve) => {
         d3.select("circle#node-" + nodeID)
             .transition()
