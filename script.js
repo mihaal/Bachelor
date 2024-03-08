@@ -48,7 +48,7 @@ let marginTop = 40,
     height = 540,
     animDuration = 700;
 
-let numbers = [4, 1, 5];
+let numbers = [4, 1, 5, 3];
 
 let binarySearchTree = new BinarySearchTree();
 
@@ -67,7 +67,7 @@ let svg = d3.select("body").append("svg")
 let duration = 750,
     animMultiplier = 1,
     root,
-    nodes, 
+    nodes,
     res;
 
 // Declares a tree layout and assigns the size
@@ -100,19 +100,31 @@ function updateHierarchy() {
 updateHierarchy()
 insertNewNodes(root);
 
-function updatePositionForAllNodes(source) {
-    svg.selectAll("g.node")
-        .transition()
-        .duration(duration)
-        .attr("transform", function (d) {
-            return "translate(" + d.x + "," + d.y + ")"
-        })
+function updatePositionForAllNodes() {
+    return new Promise((resolve, reject) => {
+        svg.selectAll("g.node")
+            .transition()
+            .duration(duration)
+            .attr("transform", function (d) {
+                return "translate(" + d.x + "," + d.y + ")"
+            })
+            .on("end", () => {
+                resolve()
+            })
+
+    })
 }
 
-function updatePositionForAllLinks(source) {
-    svg.selectAll('path.link')
-        .transition()
-        .attr('d', function (d) { return drawDiagonal(d, d.parent) })
+function updatePositionForAllLinks() {
+
+    return new Promise((resolve, reject) => {
+        svg.selectAll('path.link')
+            .transition()
+            .attr('d', function (d) { return drawDiagonal(d, d.parent) })
+            .on("end", () => {
+                resolve()
+            })
+    })
 }
 
 function insertNewNodes(root) {
@@ -183,11 +195,13 @@ function drawNodes(source) {
             return "translate(" + d.x + "," + d.y + ")";
         });
 
-    node.select('circle.node')
+    node.select('circle')
         .attr('r', 20)
         .attr("id", function (d) {
-            if (d.id == "empty") {
-                return;
+            let regex = /^empty-.*$/;
+            let value = "" + d.id
+            if (value.match(regex)) {
+                return "node-empty-" + d.parent.id
             }
             return "node-" + d.id
         })
@@ -207,7 +221,9 @@ function drawNodes(source) {
 function drawLinks(source) {
     links = treeData.descendants().slice(1);
     var link = svg.selectAll('path.link')
-        .data(links, function (d) { return d.id; })
+        .data(links, function (d) {
+            return d.id;
+        })
         .enter()
         .insert("path", "g")
         .attr("class", "link")
@@ -227,14 +243,21 @@ function drawLinks(source) {
 
     link.transition()
         .duration(animDuration)
-        .attr('d', function (d) { return drawDiagonal(d, d.parent) });
+        .attr('d', function (d) {
+            console.log(d);
+            console.log(d.parent);
+            return drawDiagonal(d, d.parent)
+        });
 }
 
 // M = Move To = Startpunkt x0 y0 -> Endpunkt x1 y1
 function drawDiagonal(start, end) {
+    console.log(start.id + " " + end.id);
+    console.log(start.x + " " + start.y + " " + end.x + " " + end.y);
     return `M ${start.x} ${start.y} ${end.x} ${end.y} `;
 }
 
+//damit empty eingefügt wird
 function myXOR(a, b) {
     return (a || b) && !(a && b);
 }
@@ -250,14 +273,57 @@ function insertNode() {
     let nodeFound = search(value)
 
     res.then(() => {
-        if (nodeFound.id != value) {
+
+        if (nodeFound.data.key == "empty") {
+            console.log("here");
+            replaceEmptyNode(nodeFound.id, value)
+            binarySearchTree.insert(new Node(new Number(value)))
+            updateHierarchy()
+            resetAnimation()
+        }
+
+        else if (nodeFound.id != value) {
             binarySearchTree.insert(new Node(new Number(value)))
             updateHierarchy()
             insertNewNodes(root)
-            updatePositionForAllNodes(root)
-            updatePositionForAllLinks(root)
+            let res1 = updatePositionForAllLinks(root)
+            let res2 = updatePositionForAllNodes(root)
+
+            res1.then(() => {
+                res2.then(() => {
+                    resetAnimation()
+                })
+            })
+        }
+        else {
+            resetAnimation()
         }
     })
+}
+
+function replaceEmptyNode(idOfNode, value) {
+
+    svg.select(`#node-${idOfNode}>circle`)
+        .classed("node-empty", false)
+        .classed("node", true)
+
+    svg.select(`#node-${idOfNode}>text`)
+        .text(value)
+
+    svg.select(`#node-${idOfNode}`)
+        .attr("id", null)
+}
+
+function resetAnimation() {
+    svg.selectAll("path")
+        .transition()
+        .duration(animDuration)
+        .style("stroke", null)
+
+    svg.selectAll("circle")
+        .transition()
+        .duration(animDuration)
+        .style("fill", null)
 }
 
 function search(value) {
@@ -289,9 +355,8 @@ function search(value) {
 
 function paintNode(nodeID, animMultiplier, fillColor) {
 
-    return new Promise((resolve, reject) => {
-
-        d3.select("#node-" + nodeID)
+    return new Promise((resolve) => {
+        d3.select("circle#node-" + nodeID)
             .transition()
             .duration(animDuration)
             .delay(animDuration * animMultiplier)
@@ -303,8 +368,7 @@ function paintNode(nodeID, animMultiplier, fillColor) {
 
 function paintLink(linkID, animMultiplier, fillColor) {
 
-    return new Promise((resolve, reject) => {
-
+    return new Promise((resolve) => {
         d3.select("#link-" + linkID)
             .transition()
             .duration(animDuration)
