@@ -4,18 +4,18 @@ svg {
     margin: auto;
 }
 
-.node circle {
+circle {
     fill: #a8e3e3;
     stroke: steelblue;
     stroke-width: 3px;
 }
 
-g[id^='node-empty-'] {
-    display: none;
-}
-
 .node text {
     font: 12px sans-serif;
+}
+
+.hidden {
+    display: none;
 }
 
 .link {

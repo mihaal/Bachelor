@@ -152,7 +152,7 @@ updateHierarchy()
 insertNewNodes(root);
 
 function updatePositionForAllNodes() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         svg.selectAll("g.node")
             .transition()
             .duration(animDuration)
@@ -167,7 +167,7 @@ function updatePositionForAllNodes() {
 
 function updatePositionForAllLinks() {
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         svg.selectAll('path.link')
             .transition()
             .attr('d', function (d) { return drawDiagonal(d, d.parent) })
@@ -191,22 +191,16 @@ function drawNodes(source) {
 
     var node = svg.selectAll('g.node')
         .data(nodes, function (individualNode) {
-            if (individualNode.data.key == "empty") {
-                return individualNode.id = "empty-" + individualNode.parent.data.key
-            }
             return individualNode.id = individualNode.data.key
         })
         .enter()
         .append("g")
-        .attr("class", "node")
-        .attr("id", function (d) {
-            let regex = /^empty-.*$/;
-            let value = "" + d.id
-            if (value.match(regex)) {
-                return "node-empty-" + d.parent.id
-            }
+        .attr("class", function (d) {
+            return matchEmpty(d.id) ? "hidden" : "node"
         })
-        //schöne Ausfächerung der Knoten, beginnend bei der Wurzel
+        .attr("id", (d) => {
+            return "node-" + d.id
+        })
         .attr("transform", function (d) {
             if (d.parent != null) {
                 return `translate(${d.parent.x}, ${d.parent.y})`
@@ -216,49 +210,25 @@ function drawNodes(source) {
 
 
     node.append("circle")
-        .attr("class", function (d) {
-            let regex = /^empty-.*$/;
-            let value = "" + d.id
-            if (value.match(regex)) {
-                return "node-empty"
-            }
-            return "node"
-        })
 
     // Text in Knoten mit Data/ID
     node.append("text")
         .attr("dy", ".35em")
         .attr("text-anchor", "middle")
-        .text(function (d) {
-            let regex = /^empty-.*$/;
-            let value = "" + d.id
-            if (value.match(regex)) {
-                return "empty"
-            }
-            return d.id
-        });
+        .text((d) => { return d.id });
 
     node.transition()
         .duration(animDuration)
-        .attr("transform", function (d) {
+        .attr("transform", (d) => {
             return "translate(" + d.x + "," + d.y + ")";
         });
 
     node.select('circle')
         .attr('r', 20)
-        .attr("id", function (d) {
-            let regex = /^empty-.*$/;
-            let value = "" + d.id
-            if (value.match(regex)) {
-                return "node-empty-" + d.parent.id
-            }
-            return "node-" + d.id
-        })
         .attr('cursor', 'pointer');
-
-    node.select('circle.node-empty')
-        .attr('r', 20)
-        .attr('cursor', 'pointer');
+    
+    //Leere Knoten werden initial gezeichnet, dann aber direkt entfernt(sonst ist Kindknoten direkt gerade unter Elternknoten)
+    removeElementsWithHiddenClass()
 }
 
 function drawLinks(source) {
@@ -269,12 +239,14 @@ function drawLinks(source) {
         })
         .enter()
         .insert("path", "g")
-        .attr("class", "link")
         .attr("id", function (d) {
             if (d.id == d.parent.children[0].id) {
                 return "link-" + d.parent.id + "left"
             }
             return "link-" + d.parent.id + "right"
+        })
+        .attr("class", function (d) {
+            return matchEmpty(d.id) ? "hidden" : "link"
         })
         .attr('d', function (d) {
             var o = { x: source.x0, y: source.y0 };
@@ -289,6 +261,9 @@ function drawLinks(source) {
         .attr('d', function (d) {
             return drawDiagonal(d, d.parent)
         });
+    
+    //Gleiche wie bei Nodes
+    removeElementsWithHiddenClass()
 }
 
 // M = Move To = Startpunkt x0 y0 -> Endpunkt x1 y1
@@ -317,8 +292,6 @@ function insertNode() {
             binarySearchTree.insert(new Node(new Number(value)))
             updateHierarchy()
             insertNewNodes(root)
-            deleteOldNodes(root)
-            deleteOldLinks(root)
             let res1 = updatePositionForAllLinks()
             let res2 = updatePositionForAllNodes()
 
@@ -332,6 +305,11 @@ function insertNode() {
             resetAnimation()
         }
     })
+}
+
+function removeElementsWithHiddenClass() {
+    d3.selectAll(".hidden")
+        .remove()
 }
 
 function deleteNode() {
@@ -403,24 +381,6 @@ function updateLinkIdentifiers(root) {
         })
 }
 
-function replaceEmptyNodeWithValue(idOfNode, value) {
-
-    svg.select(`#node-${idOfNode}>circle`)
-        .classed("node-empty", false)
-        .classed("node", true)
-        .attr("id", "node-" + value)
-
-    svg.select(`#node-${idOfNode}>text`)
-        .text(value)
-
-    svg.select(`#node-${idOfNode}`)
-        .attr("id", null)
-
-    let nodeToChange = root.descendants().filter((node) => node.id == idOfNode)
-    nodeToChange[0].id = new Number(value)
-    nodeToChange[0].data.key = new Number(value)
-}
-
 function resetAnimation() {
     svg.selectAll("path")
         .transition()
@@ -434,7 +394,7 @@ function resetAnimation() {
 }
 
 function matchEmpty(value) {
-    let regex = /^empty-.*$/;
+    let regex = /^empty.*$/;
     let valueAsString = "" + value
     if (valueAsString.match(regex)) {
         return true
@@ -473,7 +433,7 @@ function search(value) {
 
 function paintNode(nodeID, animMultiplier, fillColor) {
     return new Promise((resolve) => {
-        d3.select("circle#node-" + nodeID)
+        d3.select("g#node-" + nodeID + ">circle")
             .transition()
             .duration(animDuration)
             .delay(animDuration * animMultiplier)
