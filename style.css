@@ -10,10 +10,8 @@ svg {
     stroke-width: 3px;
 }
 
-.node circle.node-empty {
-    fill: #d8d8d8;
-    stroke: rgb(116, 116, 116);
-    stroke-width: 3px;
+g[id^='node-empty-'] {
+    display: none;
 }
 
 .node text {
