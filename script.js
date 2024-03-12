@@ -333,12 +333,7 @@ function insertNode() {
             })
         }
         else {
-            if (nodeFound.id == value) {
-                let res3 = paintNode(nodeFound.id, animMultiplier++, "green")
-                res3.then(() => {
-                    resetAnimation()
-                })
-            }
+            resetAnimation()
         }
     })
 }
@@ -367,6 +362,9 @@ function deleteNode() {
                     resetAnimation()
                 })
             })
+        }
+        else {
+            resetAnimation()
         }
     })
 }
