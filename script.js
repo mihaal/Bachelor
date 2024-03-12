@@ -102,7 +102,7 @@ let marginTop = 40,
     height = window.innerHeight - 100,
     animDuration = 700;
 
-let numbers = [4, 1, 6, 3,7,6,12,777,888,999,776,775,0,2];
+let numbers = [4, 1, 6, 3, 7, 12, 777, 888, 999, 776, 775, 0, 2];
 
 let binarySearchTree = new BinarySearchTree();
 
@@ -118,10 +118,7 @@ let svg = d3.select("body").append("svg")
     .append("g")
     .attr("transform", `translate(0, ${marginTop} )`);
 
-let duration = 750,
-    animMultiplier = 1,
-    root,
-    nodes,
+let root,
     res;
 
 // Declares a tree layout and assigns the size
@@ -158,7 +155,7 @@ function updatePositionForAllNodes() {
     return new Promise((resolve, reject) => {
         svg.selectAll("g.node")
             .transition()
-            .duration(duration)
+            .duration(animDuration)
             .attr("transform", function (d) {
                 return "translate(" + d.x + "," + d.y + ")"
             })
@@ -186,8 +183,7 @@ function insertNewNodes(root) {
 }
 
 function drawNodes(source) {
-    oldNodes = nodes
-    nodes = treeData.descendants()
+    let nodes = treeData.descendants()
 
     nodes.forEach(function (node) {
         node.y = node.depth * 100
@@ -243,7 +239,7 @@ function drawNodes(source) {
         });
 
     node.transition()
-        .duration(duration)
+        .duration(animDuration)
         .attr("transform", function (d) {
             return "translate(" + d.x + "," + d.y + ")";
         });
@@ -263,16 +259,10 @@ function drawNodes(source) {
     node.select('circle.node-empty')
         .attr('r', 20)
         .attr('cursor', 'pointer');
-
-    if (oldNodes != null && oldNodes.length == nodes.length) {
-        let valueOfParent = node._groups[0].filter(n => n)[0].__data__.parent.id;
-        svg.selectAll("#node-empty-" + valueOfParent).remove()
-        svg.selectAll(`#link-${valueOfParent}empty-${valueOfParent}`).remove()
-    }
 }
 
 function drawLinks(source) {
-    links = treeData.descendants().slice(1);
+    let links = treeData.descendants().slice(1);
     var link = svg.selectAll('path.link')
         .data(links, function (d) {
             return d.id;
@@ -324,7 +314,7 @@ function insertNode() {
     res.then(() => {
 
         if (nodeFound.data.key == "empty") {
-            replaceEmptyNode(nodeFound.id, value)
+            replaceEmptyNodeWithValue(nodeFound.id, value)
             binarySearchTree.insert(new Node(new Number(value)))
             resetAnimation()
         }
@@ -369,6 +359,7 @@ function deleteNode() {
             updateHierarchy()
             deleteOldNodes(root)
             deleteOldLinks(root)
+            updateLinkIdentifiers(root)
             let res1 = updatePositionForAllNodes()
             let res2 = updatePositionForAllLinks()
             res1.then(() => {
@@ -381,7 +372,7 @@ function deleteNode() {
 }
 
 function deleteOldNodes() {
-    nodes = root.descendants()
+    let nodes = root.descendants()
 
     nodes.forEach(function (node) {
         node.y = node.depth * 100
@@ -399,7 +390,7 @@ function deleteOldNodes() {
 }
 
 function deleteOldLinks() {
-    links = treeData.descendants().slice(1);
+    let links = treeData.descendants().slice(1);
     svg.selectAll('path.link')
         .data(links, function (d) {
             return d.id;
@@ -408,7 +399,17 @@ function deleteOldLinks() {
         .remove()
 }
 
-function replaceEmptyNode(idOfNode, value) {
+function updateLinkIdentifiers(root) {
+    svg.selectAll('path.link')
+        .attr("id", function (d) {
+            if (d.id == d.parent.children[0].id) {
+                return "link-" + d.parent.id + "left"
+            }
+            return "link-" + d.parent.id + "right"
+        })
+}
+
+function replaceEmptyNodeWithValue(idOfNode, value) {
 
     svg.select(`#node-${idOfNode}>circle`)
         .classed("node-empty", false)
