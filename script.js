@@ -313,16 +313,12 @@ function insertNode() {
 
     res.then(() => {
 
-        if (nodeFound.data.key == "empty") {
-            replaceEmptyNodeWithValue(nodeFound.id, value)
-            binarySearchTree.insert(new Node(new Number(value)))
-            resetAnimation()
-        }
-
-        else if (nodeFound.id != value) {
+        if (nodeFound.id != value) {
             binarySearchTree.insert(new Node(new Number(value)))
             updateHierarchy()
             insertNewNodes(root)
+            deleteOldNodes(root)
+            deleteOldLinks(root)
             let res1 = updatePositionForAllLinks()
             let res2 = updatePositionForAllNodes()
 
@@ -333,12 +329,7 @@ function insertNode() {
             })
         }
         else {
-            if (nodeFound.id == value) {
-                let res3 = paintNode(nodeFound.id, animMultiplier++, "green")
-                res3.then(() => {
-                    resetAnimation()
-                })
-            }
+            resetAnimation()
         }
     })
 }
@@ -367,6 +358,9 @@ function deleteNode() {
                     resetAnimation()
                 })
             })
+        }
+        else {
+            resetAnimation()
         }
     })
 }
@@ -439,21 +433,31 @@ function resetAnimation() {
         .style("fill", null)
 }
 
+function matchEmpty(value) {
+    let regex = /^empty-.*$/;
+    let valueAsString = "" + value
+    if (valueAsString.match(regex)) {
+        return true
+    }
+    return false
+}
+
 function search(value) {
     let animMultiplier = 1;
     let nodeIndex = root;
     while (nodeIndex != null && nodeIndex.id != value) {
         res = paintNode(nodeIndex.id, animMultiplier++, "red")
         if (value <= nodeIndex.id) {
-            if (nodeIndex.children === undefined) {
-                break
+            console.log(nodeIndex.id);
+            if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[0].id)) {
+                return nodeIndex
             }
             res = paintLink(nodeIndex.id + "left", animMultiplier++, "red")
             nodeIndex = nodeIndex.children[0]
 
         } else {
-            if (nodeIndex.children === undefined) {
-                break
+            if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[1].id)) {
+                return nodeIndex
             }
             res = paintLink(nodeIndex.id + "right", animMultiplier++, "red")
             nodeIndex = nodeIndex.children[1]
