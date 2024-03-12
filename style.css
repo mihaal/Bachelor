@@ -1,5 +1,6 @@
+/* Tree */
+
 svg {
-    /*background:gray;*/
     display: block;
     margin: auto;
 }
@@ -7,36 +8,45 @@ svg {
 circle {
     fill: #a8e3e3;
     stroke: steelblue;
-    stroke-width: 3px;
+    stroke-width: 2px;
 }
 
 .node text {
-    font: 12px sans-serif;
-}
-
-.hidden {
-    display: none;
+    font: 14px sans-serif;
 }
 
 .link {
     fill: none;
-    stroke: #ccc;
+    stroke: #83acb2;
     stroke-width: 2px;
+}
+
+/* Inputs */
+
+.inputs{
+    display: flex;
+    gap: 10px;
+}
+
+#numberInput {
+    width: 208px;
+    font-size: 22px;
+    border-radius: 15px;
+    border: 1px solid black;
 }
 
 .myButton {
     width: 208px;
     height: 50px;
-    font-size: 20px ;
-    color: #000000 ;
-    background: linear-gradient(to top, #1dd862, #16ab4d);
-    border: 0px solid #006c29;
+    font-size: 22px;
+    color: #000000;
+    background: linear-gradient(to top, #a8e3e3, steelblue);
     border-radius: 15px;
     font-family: arial;
+    border: 0px;
     transition: all 0.25s ease;
 }
 
 .myButton:hover {
-    color: #fff;
-
+    color: rgb(41, 41, 41);
 }
