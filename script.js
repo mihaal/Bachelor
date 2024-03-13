@@ -183,7 +183,7 @@ function insertNewNodes(root) {
 }
 
 function drawNodes(source) {
-    let nodes = treeData.descendants()
+    let nodes = root.descendants()
 
     nodes.forEach(function (node) {
         node.y = node.depth * 100
@@ -232,7 +232,7 @@ function drawNodes(source) {
 }
 
 function drawLinks(source) {
-    let links = treeData.descendants().slice(1);
+    let links = root.descendants().slice(1);
     var link = svg.selectAll('path.link')
         .data(links, function (d) {
             return d.id;
@@ -410,27 +410,27 @@ function search(value) {
     let animMultiplier = 1;
     let nodeIndex = root;
     while (nodeIndex != null && nodeIndex.id != value) {
-        res = paintNode(nodeIndex.id, animMultiplier++, "red")
+        res = paintNode(nodeIndex.id, animMultiplier++, "#ff8330")
         if (value <= nodeIndex.id) {
             console.log(nodeIndex.id);
             if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[0].id)) {
                 return nodeIndex
             }
-            paintLink(nodeIndex.id + "left", animMultiplier++, "red")
+            paintLink(nodeIndex.id + "left", animMultiplier++, "#ff7278")
             nodeIndex = nodeIndex.children[0]
 
         } else {
             if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[1].id)) {
                 return nodeIndex
             }
-            paintLink(nodeIndex.id + "right", animMultiplier++, "red")
+            paintLink(nodeIndex.id + "right", animMultiplier++, "#ff7278")
             nodeIndex = nodeIndex.children[1]
         }
     }
 
     // needs to be inside here bc of animMultiplier
     if (nodeIndex.id == value) {
-        res = paintNode(nodeIndex.id, animMultiplier++, "green")
+        res = paintNode(nodeIndex.id, animMultiplier++, "#23fd71")
     }
     return nodeIndex;
 }
