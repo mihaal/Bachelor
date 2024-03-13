@@ -142,39 +142,13 @@ function updateHierarchy() {
     treeData = treemap(root);
 }
 
-updateHierarchy()
-insertNewNodes(root);
-
-function updatePositionForAllNodes() {
-    return new Promise((resolve) => {
-        svg.selectAll("g.node")
-            .transition()
-            .duration(animDuration)
-            .attr("transform", function (d) {
-                return "translate(" + d.x + "," + d.y + ")"
-            })
-            .on("end", () => {
-                resolve()
-            })
-    })
-}
-
-function updatePositionForAllLinks() {
-
-    return new Promise((resolve) => {
-        svg.selectAll('path.link')
-            .transition()
-            .attr('d', function (d) { return drawDiagonal(d, d.parent) })
-            .on("end", () => {
-                resolve()
-            })
-    })
-}
-
 function insertNewNodes() {
     drawNodes()
     drawLinks()
 }
+
+updateHierarchy()
+insertNewNodes();
 
 function drawNodes() {
     let nodes = root.descendants()
@@ -260,6 +234,12 @@ function drawLinks() {
     removeElementsWithHiddenClass()
 }
 
+
+function removeElementsWithHiddenClass() {
+    d3.selectAll(".hidden")
+        .remove()
+}
+
 // M = Move To = Startpunkt x0 y0 -> Endpunkt x1 y1
 function drawDiagonal(start, end) {
     return `M ${start.x} ${start.y} ${end.x} ${end.y} `;
@@ -270,6 +250,35 @@ function myXOR(a, b) {
     return (a || b) && !(a && b);
 }
 
+
+function searchNodeVisually(value) {
+    let animMultiplier = 1;
+    let nodeIndex = root;
+    while (nodeIndex != null && nodeIndex.id != value) {
+        res = paintNode(nodeIndex.id, animMultiplier++, "#ff7278")
+        if (value <= nodeIndex.id) {
+            if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[0].id)) {
+                return nodeIndex
+            }
+            paintLink(nodeIndex.id + "left", animMultiplier++, "#ff7278")
+            nodeIndex = nodeIndex.children[0]
+
+        } else {
+            if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[1].id)) {
+                return nodeIndex
+            }
+            paintLink(nodeIndex.id + "right", animMultiplier++, "#ff7278")
+            nodeIndex = nodeIndex.children[1]
+        }
+    }
+
+    // needs to be inside here bc of animMultiplier
+    if (nodeIndex.id == value) {
+        res = paintNode(nodeIndex.id, animMultiplier++, "#23fd71")
+    }
+    return nodeIndex;
+}
+
 function insertNode() {
     let value = document.getElementById("numberInput").value
     if (!matchNumber(value)) {
@@ -277,11 +286,11 @@ function insertNode() {
         return
     }
 
-    let nodeFound = search(value)
+    let nodeFound = binarySearchTree.search(value)
+    searchNodeVisually(value)
 
     res.then(() => {
-
-        if (nodeFound.id != value) {
+        if (nodeFound == null) {
             binarySearchTree.insert(new Node(new Number(value)))
             updateHierarchy()
             insertNewNodes(root)
@@ -300,19 +309,15 @@ function insertNode() {
     })
 }
 
-function removeElementsWithHiddenClass() {
-    d3.selectAll(".hidden")
-        .remove()
-}
-
 function deleteNode() {
     let value = document.getElementById("numberInput").value
     if (!matchNumber(value)) {
-        alert("Wert muss Zahl < 1000 und > 0 sein!");
+        alert("Wert muss Zahl < 1000 und > 0 sein!"); 
         return
     }
 
-    let nodeFound = search(value)
+    let nodeFound = binarySearchTree.search(value)
+    searchNodeVisually(value)
 
     res.then(() => {
         if (nodeFound.id == value) {
@@ -320,7 +325,7 @@ function deleteNode() {
             updateHierarchy()
             deleteOldNodes()
             deleteOldLinks()
-            updateLinkIdentifiers(root)
+            updateLinkIdentifiers()
             let res1 = updatePositionForAllNodes()
             let res2 = updatePositionForAllLinks()
             res1.then(() => {
@@ -332,6 +337,32 @@ function deleteNode() {
         else {
             resetAnimation()
         }
+    })
+}
+
+function updatePositionForAllNodes() {
+    return new Promise((resolve) => {
+        svg.selectAll("g.node")
+            .transition()
+            .duration(animDuration)
+            .attr("transform", function (d) {
+                return "translate(" + d.x + "," + d.y + ")"
+            })
+            .on("end", () => {
+                resolve()
+            })
+    })
+}
+
+function updatePositionForAllLinks() {
+
+    return new Promise((resolve) => {
+        svg.selectAll('path.link')
+            .transition()
+            .attr('d', function (d) { return drawDiagonal(d, d.parent) })
+            .on("end", () => {
+                resolve()
+            })
     })
 }
 
@@ -398,35 +429,6 @@ function matchNumber(value) {
         return true
     }
     return false
-}
-
-function search(value) {
-    let animMultiplier = 1;
-    let nodeIndex = root;
-    while (nodeIndex != null && nodeIndex.id != value) {
-        res = paintNode(nodeIndex.id, animMultiplier++, "#ff7278")
-        if (value <= nodeIndex.id) {
-            console.log(nodeIndex.id);
-            if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[0].id)) {
-                return nodeIndex
-            }
-            paintLink(nodeIndex.id + "left", animMultiplier++, "#ff7278")
-            nodeIndex = nodeIndex.children[0]
-
-        } else {
-            if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[1].id)) {
-                return nodeIndex
-            }
-            paintLink(nodeIndex.id + "right", animMultiplier++, "#ff7278")
-            nodeIndex = nodeIndex.children[1]
-        }
-    }
-
-    // needs to be inside here bc of animMultiplier
-    if (nodeIndex.id == value) {
-        res = paintNode(nodeIndex.id, animMultiplier++, "#23fd71")
-    }
-    return nodeIndex;
 }
 
 function paintNode(nodeID, animMultiplier, fillColor) {
