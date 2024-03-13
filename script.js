@@ -102,13 +102,11 @@ let marginTop = 40,
     height = window.innerHeight - 100,
     animDuration = 700;
 
-let numbers = [4, 1, 6, 3, 7, 12, 777, 888, 999, 776, 775, 0, 2];
-
 let binarySearchTree = new BinarySearchTree();
 
 // in (virtuellen) bst einfügen
-for (let i in numbers) {
-    binarySearchTree.insert(new Node(numbers[i]));
+for (let i = 0; i < 7; i++) {
+    binarySearchTree.insert(new Node(Math.floor(Math.random() * 1000 - 1)));
 }
 
 // Erstellt <svg> Objekt und fügt Gruppe (=BST Knoten) als Kind hinzu
@@ -121,7 +119,7 @@ let svg = d3.select("body").append("svg")
 let root,
     res;
 
-// Declares a tree layout and assigns the size
+// Baum Layout
 var treemap = d3.tree().size([width, height]);
 
 function updateHierarchy() {
@@ -135,16 +133,12 @@ function updateHierarchy() {
         }
         if (d.right) {
             if (myXOR(d.left, d.right)) {
-                d.children.push(new Node("empty")
-                );
+                d.children.push(new Node("empty"));
             }
             d.children.push(d.right);
         }
         return d.children;
     });
-
-    root.x0 = width / 2;
-    root.y0 = 0;
     treeData = treemap(root);
 }
 
@@ -177,12 +171,12 @@ function updatePositionForAllLinks() {
     })
 }
 
-function insertNewNodes(root) {
-    drawNodes(root)
-    drawLinks(root)
+function insertNewNodes() {
+    drawNodes()
+    drawLinks()
 }
 
-function drawNodes(source) {
+function drawNodes() {
     let nodes = root.descendants()
 
     nodes.forEach(function (node) {
@@ -205,7 +199,7 @@ function drawNodes(source) {
             if (d.parent != null) {
                 return `translate(${d.parent.x}, ${d.parent.y})`
             }
-            return `translate(${source.x0}, ${source.y0})`
+            return `translate(${root.x}, ${root.y})`
         });
 
 
@@ -231,7 +225,7 @@ function drawNodes(source) {
     removeElementsWithHiddenClass()
 }
 
-function drawLinks(source) {
+function drawLinks() {
     let links = root.descendants().slice(1);
     var link = svg.selectAll('path.link')
         .data(links, function (d) {
@@ -249,7 +243,7 @@ function drawLinks(source) {
             return matchEmpty(d.id) ? "hidden" : "link"
         })
         .attr('d', function (d) {
-            var o = { x: source.x0, y: source.y0 };
+            var o = { x: root.x0, y: root.y0 };
             if (d.parent != null) {
                 var o = { x: d.parent.x, y: d.parent.y };
             }
@@ -366,7 +360,7 @@ function deleteOldLinks() {
         .remove()
 }
 
-function updateLinkIdentifiers(root) {
+function updateLinkIdentifiers() {
     svg.selectAll('path.link')
         .attr("id", function (d) {
             if (d.id == d.parent.children[0].id) {
@@ -410,7 +404,7 @@ function search(value) {
     let animMultiplier = 1;
     let nodeIndex = root;
     while (nodeIndex != null && nodeIndex.id != value) {
-        res = paintNode(nodeIndex.id, animMultiplier++, "#ff8330")
+        res = paintNode(nodeIndex.id, animMultiplier++, "#ff7278")
         if (value <= nodeIndex.id) {
             console.log(nodeIndex.id);
             if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[0].id)) {
