@@ -48,5 +48,6 @@ circle {
 }
 
 .myButton:hover {
-    color: rgb(41, 41, 41);
+    color: white;
+    text-shadow: 0px 0px 8px black;
 }

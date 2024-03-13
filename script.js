@@ -278,9 +278,8 @@ function myXOR(a, b) {
 
 function insertNode() {
     let value = document.getElementById("numberInput").value
-    let regex = /^[0-9]{1,3}$/;
-    if (!value.match(regex)) {
-        alert("Wert muss Zahl (< 1000) sein!");
+    if (!matchNumber(value)) {
+        alert("Wert muss Zahl < 1000 und > 0 sein!");
         return
     }
 
@@ -314,9 +313,8 @@ function removeElementsWithHiddenClass() {
 
 function deleteNode() {
     let value = document.getElementById("numberInput").value
-    let regex = /^[0-9]{1,3}$/;
-    if (!value.match(regex)) {
-        alert("Wert muss Zahl (< 1000) sein!");
+    if (!matchNumber(value)) {
+        alert("Wert muss Zahl < 1000 und > 0 sein!");
         return
     }
 
@@ -326,8 +324,8 @@ function deleteNode() {
         if (nodeFound.id == value) {
             binarySearchTree.delete(binarySearchTree.search(value))
             updateHierarchy()
-            deleteOldNodes(root)
-            deleteOldLinks(root)
+            deleteOldNodes()
+            deleteOldLinks()
             updateLinkIdentifiers(root)
             let res1 = updatePositionForAllNodes()
             let res2 = updatePositionForAllLinks()
@@ -352,9 +350,6 @@ function deleteOldNodes() {
 
     svg.selectAll('g.node')
         .data(nodes, function (individualNode) {
-            if (individualNode.data.key == "empty") {
-                return individualNode.id = "empty-" + individualNode.parent.data.key
-            }
             return individualNode.id = individualNode.data.key
         })
         .exit()
@@ -362,7 +357,7 @@ function deleteOldNodes() {
 }
 
 function deleteOldLinks() {
-    let links = treeData.descendants().slice(1);
+    let links = root.descendants().slice(1);
     svg.selectAll('path.link')
         .data(links, function (d) {
             return d.id;
@@ -402,6 +397,15 @@ function matchEmpty(value) {
     return false
 }
 
+function matchNumber(value) {
+    let regex = /^[0-9]{1,3}$/;
+    let valueAsString = "" + value
+    if (valueAsString.match(regex)) {
+        return true
+    }
+    return false
+}
+
 function search(value) {
     let animMultiplier = 1;
     let nodeIndex = root;
@@ -412,14 +416,14 @@ function search(value) {
             if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[0].id)) {
                 return nodeIndex
             }
-            res = paintLink(nodeIndex.id + "left", animMultiplier++, "red")
+            paintLink(nodeIndex.id + "left", animMultiplier++, "red")
             nodeIndex = nodeIndex.children[0]
 
         } else {
             if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[1].id)) {
                 return nodeIndex
             }
-            res = paintLink(nodeIndex.id + "right", animMultiplier++, "red")
+            paintLink(nodeIndex.id + "right", animMultiplier++, "red")
             nodeIndex = nodeIndex.children[1]
         }
     }
