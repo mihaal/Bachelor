@@ -105,7 +105,7 @@ let marginTop = 40,
 let binarySearchTree = new BinarySearchTree();
 
 // in (virtuellen) bst einfügen
-for (let i = 0; i < 7; i++) {
+for (let i = 0; i < 1; i++) {
     binarySearchTree.insert(new Node(Math.floor(Math.random() * 1000 - 1)));
 }
 
@@ -319,9 +319,13 @@ function deleteNode() {
     let nodeFound = binarySearchTree.search(value)
     searchNodeVisually(value)
 
+    console.log(value);
+    console.log(nodeFound);
+
     res.then(() => {
-        if (nodeFound.id == value) {
+        if (nodeFound.key == value) {
             binarySearchTree.delete(binarySearchTree.search(value))
+            console.log("after delete");
             updateHierarchy()
             deleteOldNodes()
             deleteOldLinks()
