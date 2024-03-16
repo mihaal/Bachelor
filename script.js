@@ -23,7 +23,7 @@ let root,
 // Baum Layout
 var treemap = d3.tree().size([width, height]);
 
-function updateHierarchy() {
+function updateHierarchy(binarySearchTree) {
     root = d3.hierarchy(binarySearchTree.root, function (d) {
         d.children = [];
         if (d.left) {
@@ -43,13 +43,7 @@ function updateHierarchy() {
     treeData = treemap(root);
 }
 
-function insertNewNodes() {
-    drawNodes()
-    drawLinks()
-}
-
-updateHierarchy()
-insertNewNodes();
+// updateHierarchy(),
 
 function drawNodes() {
     let nodes = root.descendants()

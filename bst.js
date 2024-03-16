@@ -26,7 +26,8 @@ class BinarySearchTree {
     }
 
     //iterative
-    insert(node) {
+    insert(value) {
+        let node = new Node(value);
         let y = null
         let x = this.root
         while (x != null) {
@@ -54,6 +55,7 @@ class BinarySearchTree {
             this.inOrderWalk(x.right)
         }
     }
+
     transPlantSubtree(u, v) {
         if (u.parent == null) {
             this.root = v
@@ -76,22 +78,24 @@ class BinarySearchTree {
         return node
     }
 
-    delete(value) {
-        if (value.left == null) {
-            this.transPlantSubtree(value, value.right)
+    deleteNode(value) {
+        let node = this.search(value)
+        if (node == null) return
+        else if (node.left == null) {
+            this.transPlantSubtree(node, node.right)
         }
-        else if (value.right == null) {
-            this.transPlantSubtree(value, value.left)
+        else if (node.right == null) {
+            this.transPlantSubtree(node, node.left)
         }
         else {
-            let y = this.treeMinimum(value.right)
-            if (y.parent != value) {
+            let y = this.treeMinimum(node.right)
+            if (y.parent != node) {
                 this.transPlantSubtree(y, y.right)
-                y.right = value.right
+                y.right = node.right
                 y.right.parent = y
             }
-            this.transPlantSubtree(value, y)
-            y.left = value.left
+            this.transPlantSubtree(node, y)
+            y.left = node.left
             y.left.parent = y
         }
     }
