@@ -48,8 +48,8 @@ class VisualBST {
 
         this.#res.then(() => {
             this.updateHierarchy()
-            this.#drawInitialNodes()
-            this.#drawInitialLinks()
+            this.#drawAddedNodes()
+            this.#drawAddedLinks()
             let res1 = this.#updatePositionForAllLinks()
             let res2 = this.#updatePositionForAllNodes()
             
@@ -100,11 +100,11 @@ class VisualBST {
             return d.children;
         });
         this.treemap(this.root);
-        this.#drawInitialNodes()
-        this.#drawInitialLinks()
+        this.#drawAddedNodes()
+        this.#drawAddedLinks()
     }
 
-    #drawInitialNodes() {
+    #drawAddedNodes() {
         let root = this.root
         let nodes = this.root.descendants()
 
@@ -154,7 +154,7 @@ class VisualBST {
         removeElementsWithHiddenClass()
     }
 
-    #drawInitialLinks() {
+    #drawAddedLinks() {
         let root = this.root
         let links = this.root.descendants().slice(1);
         var link = this.svg.selectAll('path.link')
@@ -290,7 +290,6 @@ function myXOR(a, b) {
     return (a || b) && !(a && b);
 }
 
-// M = Move To = Startpunkt x0 y0 -> Endpunkt x1 y1
 function drawDiagonal(start, end) {
     return `M ${start.x} ${start.y} ${end.x} ${end.y} `;
 }
@@ -312,7 +311,6 @@ function paintNode(nodeID, animMultiplier, fillColor) {
 }
 
 function paintLink(linkID, animMultiplier, fillColor) {
-
     return new Promise((resolve) => {
         d3.select("#link-" + linkID)
             .transition()
