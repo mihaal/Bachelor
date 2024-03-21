@@ -49,14 +49,14 @@ class VisualBST {
             return
         }
 
-        this.searchVisually(value)
+        this.search(value)
 
         this.#res.then(() => {
             this.updateHierarchy()
         })
     }
 
-    // man darf nach allem suchen, findet halt nur nix
+    // man darf nach allem suchen (auch buchstaben), findet halt nur nix
     deleteNode(value) {
         this.search(value)
 
