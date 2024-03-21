@@ -1,17 +1,32 @@
-let virtualBST = new BinarySearchTree()
-virtualBST.insert(20)
-let visualBST = new VisualBST(window, virtualBST)
-visualBST.updateHierarchy(virtualBST)
+let virtualBST, visualBST 
+window.onload = () => {
+    virtualBST = new BinarySearchTree()
+    visualBST = new VisualBST(window, virtualBST)
+    
 
-let handler = {
-    get(target, prop, receiver) {
-        let value = target[prop]
-        if (value instanceof Function) {
-            return function (...args) {
-                value.apply(this === receiver ? target : this, args);
-                visualBST[prop](...args)
+    let handler = {
+        get(target, prop, receiver) {
+            let value = target[prop]
+            if (value instanceof Function) {
+                return function (...args) {
+                    value.apply(this === receiver ? target : this, args);
+                    visualBST[prop](...args)
+                }
             }
         }
     }
+    const proxy = new Proxy(virtualBST, handler);
+
+    const insertButton = document.getElementById("insertButton");
+    const deleteButton = document.getElementById("deleteButton");
+    const numberInput = document.getElementById("numberInput");
+
+    insertButton.addEventListener("click", function () {
+        proxy.insert(numberInput.value)
+    })
+
+    deleteButton.addEventListener("click", function () {
+        proxy.deleteNode(numberInput.value)
+    })
 }
-const proxy = new Proxy(virtualBST, handler);
+

@@ -27,7 +27,9 @@ class BinarySearchTree {
 
     //iterative
     insert(value) {
-        let node = new Node(value);
+        let node = this.search(value)
+        if (node != null) return
+        node = new Node(value);
         let y = null
         let x = this.root
         while (x != null) {

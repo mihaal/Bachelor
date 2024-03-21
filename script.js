@@ -1,6 +1,6 @@
 let marginTop = 40,
     width = window.innerWidth,
-    height = window.innerHeight - 100,
+    height = window.innerHeight,
     animDuration = 700;
 
 let binarySearchTree = new BinarySearchTree();

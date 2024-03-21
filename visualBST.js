@@ -4,15 +4,15 @@ class VisualBST {
     #res;
     constructor(window, binarySearchTree) {
         this.width = window.innerWidth
-        this.height = window.innerHeight
+        this.height = window.innerHeight - 200
         this.bst = binarySearchTree
-        this.svg = d3.select("body").append("svg")
+        this.svg = d3.select("body").insert("svg", ":first-child")
             .attr("height", this.height)
             .attr("viewBox", `0 0 ${this.width} ${this.height}`)
             .append("g")
             .attr("transform", "translate(0, 40)");
         this.treemap = d3.tree().size([this.width, this.height]);
-
+        this.updateHierarchy()
     }
 
     searchVisually(value) {
@@ -36,7 +36,7 @@ class VisualBST {
             }
         }
 
-        // needs to be inside here bc of animMultiplier
+        // muss innerhalb dieser Funktion sein wegen fortlaufendem animMultiplier
         if (nodeIndex.id == value) {
             this.#res = paintNode(nodeIndex.id, animMultiplier++, "#23fd71")
         }
@@ -44,15 +44,17 @@ class VisualBST {
     }
 
     insert(value) {
+        if (!matchNumber(value)) {
+            alert("Wert muss Zahl < 1000 und > 0 sein!");
+            return
+        }
+
         this.searchVisually(value)
 
         this.#res.then(() => {
             this.updateHierarchy()
-            this.#drawAddedNodes()
-            this.#drawAddedLinks()
             let res1 = this.#updatePositionForAllLinks()
             let res2 = this.#updatePositionForAllNodes()
-            
             res1.then(() => {
                 res2.then(() => {
                     this.#resetAnimation()
@@ -61,6 +63,7 @@ class VisualBST {
         })
     }
 
+    // man darf nach allem suchen, findet halt nur nix
     deleteNode(value) {
         this.searchVisually(value)
 
@@ -83,7 +86,7 @@ class VisualBST {
     }
 
     updateHierarchy() {
-        this.root = d3.hierarchy(this.bst.root, function (d) {
+        this.root = d3.hierarchy(this.bst.root == null ? {} : this.bst.root, function (d) {
             d.children = [];
             if (d.left) {
                 d.children.push(d.left);
@@ -134,7 +137,6 @@ class VisualBST {
 
         node.append("circle")
 
-        // Text in Knoten mit Data/ID
         node.append("text")
             .attr("dy", ".35em")
             .attr("text-anchor", "middle")
@@ -157,6 +159,7 @@ class VisualBST {
     #drawAddedLinks() {
         let root = this.root
         let links = this.root.descendants().slice(1);
+        console.log(links);
         var link = this.svg.selectAll('path.link')
             .data(links, function (d) {
                 return d.id;
@@ -179,7 +182,6 @@ class VisualBST {
                 }
                 return drawDiagonal(o, o);
             })
-
         link.transition()
             .duration(this.#animDuration)
             .attr('d', function (d) {
