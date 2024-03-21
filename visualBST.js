@@ -53,28 +53,15 @@ class VisualBST {
 
         this.#res.then(() => {
             this.updateHierarchy()
-            let res1 = this.#updatePositionForAllLinks()
-            let res2 = this.#updatePositionForAllNodes()
-            res1.then(() => {
-                res2.then(() => {
-                    this.#resetAnimation()
-                })
-            })
         })
     }
 
     // man darf nach allem suchen, findet halt nur nix
     deleteNode(value) {
-        this.searchVisually(value)
+        this.search(value)
 
         this.#res.then(() => {
             this.updateHierarchy()
-            this.#deleteOldNodes()
-            this.#deleteOldLinks()
-            this.#updateLinkIdentifiers()
-            this.#updatePositionForAllNodes()
-            this.#updatePositionForAllLinks()
-            this.#resetAnimation()
         })
     }
 
@@ -105,6 +92,17 @@ class VisualBST {
         this.treemap(this.root);
         this.#drawAddedNodes()
         this.#drawAddedLinks()
+        this.#updateLinkIdentifiers()
+        let res1 = this.#updatePositionForAllNodes()
+        let res2 = this.#updatePositionForAllLinks()
+        res1.then(() => {
+            res2.then(() => {
+                this.#resetAnimation()
+            })
+        })
+        this.#deleteOldNodes()
+        this.#deleteOldLinks()
+
     }
 
     #drawAddedNodes() {
