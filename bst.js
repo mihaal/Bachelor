@@ -1,6 +1,11 @@
 let handler2 = {
     get(target, prop, receiver) {
         let value = target[prop]
+        if (value instanceof Function) {
+            return function (...args) {
+                return value.apply(this === receiver ? target : this, args);
+            }
+        }
         switch (prop) {
             case "key":
                 return target[prop]
@@ -11,12 +16,13 @@ let handler2 = {
                 return target[prop]
             case "right":
                 if (target[prop] != null) {
-                    console.log(target[prop].key);
                     visualBST.search(target[prop].key)
                 }
+                return target[prop]
             case "children":
                 return target[prop]
-
+            case "parent":
+                return target[prop]
         }
     },
     set(obj, prop, value) {
@@ -25,27 +31,10 @@ let handler2 = {
                 obj[prop] = value
                 return true
             case "left":
-                if (obj[prop] != null) { 
-                    if (value > obj.key) return false
-                    obj[prop].key = value
-                    visualBST.updateNodes()
-                    visualBST.updateHierarchy()
-                }
-                else {
-                    obj[prop] = value    
-                }
+                obj[prop] = value
                 return true
             case "right":
-                if (obj[prop] != null) {
-                    if (value <= obj.key) return false
-                    obj[prop].key = value
-                    visualBST.updateNodes()
-                    visualBST.updateHierarchy()
-                }
-                else if (obj[prop] == null && !Number.isNaN(value) ) {
-                    obj[prop] = new Node(value)    
-                    visualBST.updateHierarchy()
-                }
+                obj[prop] = value
                 return true
             case "parent":
                 obj[prop] = value
