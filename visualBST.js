@@ -72,6 +72,18 @@ class VisualBST {
         })
     }
 
+    updateNodes() {
+        let nodes = this.root.descendants()
+        var node = d3.selectAll('g.node>text')
+            .data(nodes, function (individualNode) {
+                return individualNode.id = individualNode.data.key
+            })
+            .attr("text-anchor", "middle")
+            .text((d) => { return d.id });
+        console.log("node");
+        console.log(node);
+    }
+
     updateHierarchy() {
         this.root = d3.hierarchy(this.bst.root == null ? {} : this.bst.root, function (d) {
             d.children = [];

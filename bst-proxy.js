@@ -13,8 +13,19 @@ let handler = {
                 visualBST[prop](...args)
             }
         }
+        else {
+            switch (prop) {
+                case "root":
+                    visualBST.search(target[prop].key)
+                    return target[prop]
+                default:
+                    break;
+            }
+        }
     }
 }
+
+
 bst = new Proxy(virtualBST, handler);
 
 const insertButton = document.getElementById("insertButton");
