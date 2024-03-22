@@ -22,11 +22,11 @@ const deleteButton = document.getElementById("deleteButton");
 const numberInput = document.getElementById("numberInput");
 
 insertButton.addEventListener("click", function () {
-    proxy.insert(numberInput.value)
+    bst.insert(numberInput.value)
 })
 
 deleteButton.addEventListener("click", function () {
-    proxy.deleteNode(numberInput.value)
+    bst.deleteNode(numberInput.value)
 })
 
 

@@ -27,9 +27,10 @@ class BinarySearchTree {
 
     //iterative
     insert(value) {
+        if (!matchNumber(value)) return
         let node = this.search(value)
         if (node != null) return
-        node = new Node(value);
+        node = new Node(parseInt(value));
         let y = null
         let x = this.root
         while (x != null) {
