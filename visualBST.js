@@ -19,26 +19,26 @@ class VisualBST {
         let animMultiplier = 1;
         let nodeIndex = this.root;
         while (nodeIndex != null && nodeIndex.id != value) {
-            this.#res = paintNode(nodeIndex.id, animMultiplier++, "#ff7278")
+            this.#res = this.#paintNode(nodeIndex.id, animMultiplier++, "#ff7278")
             if (value <= nodeIndex.id) {
                 if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[0].id)) {
                     return nodeIndex
                 }
-                paintLink(nodeIndex.id + "left", animMultiplier++, "#ff7278")
+                this.#paintLink(nodeIndex.id + "left", animMultiplier++, "#ff7278")
                 nodeIndex = nodeIndex.children[0]
 
             } else {
                 if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[1].id)) {
                     return nodeIndex
                 }
-                paintLink(nodeIndex.id + "right", animMultiplier++, "#ff7278")
+                this.#paintLink(nodeIndex.id + "right", animMultiplier++, "#ff7278")
                 nodeIndex = nodeIndex.children[1]
             }
         }
 
         // muss innerhalb dieser Funktion sein wegen fortlaufendem animMultiplier
         if (nodeIndex.id == value) {
-            this.#res = paintNode(nodeIndex.id, animMultiplier++, "#23fd71")
+            this.#res = this.#paintNode(nodeIndex.id, animMultiplier++, "#23fd71")
         }
         return nodeIndex;
     }
@@ -77,12 +77,12 @@ class VisualBST {
             d.children = [];
             if (d.left) {
                 d.children.push(d.left);
-                if (myXOR(d.left, d.right)) {
+                if (exclusiveOR(d.left, d.right)) {
                     d.children.push(new Node("empty"));
                 }
             }
             if (d.right) {
-                if (myXOR(d.left, d.right)) {
+                if (exclusiveOR(d.left, d.right)) {
                     d.children.push(new Node("empty"));
                 }
                 d.children.push(d.right);
@@ -151,7 +151,7 @@ class VisualBST {
             .attr('cursor', 'pointer');
 
         //Leere Knoten werden initial gezeichnet, dann aber direkt entfernt(sonst ist Kindknoten direkt gerade unter Elternknoten)
-        removeElementsWithHiddenClass()
+        this.#removeElementsWithHiddenClass()
     }
 
     #drawAddedLinks() {
@@ -178,16 +178,16 @@ class VisualBST {
                 if (d.parent != null) {
                     var o = { x: d.parent.x, y: d.parent.y };
                 }
-                return drawDiagonal(o, o);
+                return drawDiagonalInSVG(o, o);
             })
         link.transition()
             .duration(this.#animDuration)
             .attr('d', function (d) {
-                return drawDiagonal(d, d.parent)
+                return drawDiagonalInSVG(d, d.parent)
             });
 
         //Gleiche wie bei Nodes
-        removeElementsWithHiddenClass()
+        this.#removeElementsWithHiddenClass()
     }
 
     #updatePositionForAllNodes() {
@@ -209,7 +209,7 @@ class VisualBST {
         return new Promise((resolve) => {
             this.svg.selectAll('path.link')
                 .transition()
-                .attr('d', function (d) { return drawDiagonal(d, d.parent) })
+                .attr('d', function (d) { return drawDiagonalInSVG(d, d.parent) })
                 .on("end", () => {
                     resolve()
                 })
@@ -262,6 +262,34 @@ class VisualBST {
             .duration(this.#animDuration)
             .style("fill", null)
     }
+
+
+    #removeElementsWithHiddenClass() {
+        d3.selectAll(".hidden")
+            .remove()
+    }
+
+    #paintNode(nodeID, animMultiplier, fillColor) {
+        return new Promise((resolve) => {
+            d3.select("g#node-" + nodeID + ">circle")
+                .transition()
+                .duration(750)
+                .delay(740 * animMultiplier)
+                .style("fill", fillColor)
+                .on("end", function () { resolve() })
+        })
+    }
+
+    #paintLink(linkID, animMultiplier, fillColor) {
+        return new Promise((resolve) => {
+            d3.select("#link-" + linkID)
+                .transition()
+                .duration(750)
+                .delay(740 * animMultiplier)
+                .style("stroke", fillColor)
+                .on("end", function () { resolve() })
+        })
+    }
 }
 
 // 
@@ -285,40 +313,13 @@ function matchNumber(value) {
     return false
 }
 
-//damit empty eingefügt wird
-function myXOR(a, b) {
+//XOR damit empty eingefügt wird
+function exclusiveOR(a, b) {
     return (a || b) && !(a && b);
 }
 
-function drawDiagonal(start, end) {
+function drawDiagonalInSVG(start, end) {
     return `M ${start.x} ${start.y} ${end.x} ${end.y} `;
-}
-
-function removeElementsWithHiddenClass() {
-    d3.selectAll(".hidden")
-        .remove()
-}
-
-function paintNode(nodeID, animMultiplier, fillColor) {
-    return new Promise((resolve) => {
-        d3.select("g#node-" + nodeID + ">circle")
-            .transition()
-            .duration(750)
-            .delay(740 * animMultiplier)
-            .style("fill", fillColor)
-            .on("end", function () { resolve() })
-    })
-}
-
-function paintLink(linkID, animMultiplier, fillColor) {
-    return new Promise((resolve) => {
-        d3.select("#link-" + linkID)
-            .transition()
-            .duration(750)
-            .delay(740 * animMultiplier)
-            .style("stroke", fillColor)
-            .on("end", function () { resolve() })
-    })
 }
 
 
