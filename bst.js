@@ -8,21 +8,15 @@ let handler2 = {
         }
         switch (prop) {
             case "key":
-                return target[prop]
-            case "left":
-                if (target[prop] != null) {
-                    visualBST.search(target[prop].key)
-                }
-                return target[prop]
-            case "right":
-                if (target[prop] != null) {
-                    visualBST.search(target[prop].key)
-                }
-                return target[prop]
+                return value
             case "children":
-                return target[prop]
-            case "parent":
-                return target[prop]
+                return value
+            //left, right und parent 
+            default:
+                if (value != null) {
+                    visualBST.search(value.key)
+                }
+                return value
         }
     },
     set(obj, prop, value) {
