@@ -44,7 +44,7 @@ function drawNodes() {
         .attr('cursor', 'pointer');
     
     //Leere Knoten werden initial gezeichnet, dann aber direkt entfernt(sonst ist Kindknoten direkt gerade unter Elternknoten)
-    removeElementsWithHiddenClass()
+    // removeElementsWithHiddenClass()
 }
 
 function drawLinks() {
@@ -79,7 +79,7 @@ function drawLinks() {
         });
     
     //Gleiche wie bei Nodes
-    removeElementsWithHiddenClass()
+    // removeElementsWithHiddenClass()
 }
 
 

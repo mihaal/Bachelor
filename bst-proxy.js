@@ -28,6 +28,7 @@ let handler = {
 
 bst = new Proxy(virtualBST, handler);
 
+
 const insertButton = document.getElementById("insertButton");
 const deleteButton = document.getElementById("deleteButton");
 const numberInput = document.getElementById("numberInput");

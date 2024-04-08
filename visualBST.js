@@ -11,7 +11,7 @@ class VisualBST {
             .attr("viewBox", `0 0 ${this.width} ${this.height}`)
             .append("g")
             .attr("transform", "translate(0, 40)");
-        this.treemap = d3.tree().size([this.width, this.height]);
+        this.tree = d3.tree().size([this.width, this.height]);
         this.updateHierarchy()
     }
 
@@ -21,14 +21,14 @@ class VisualBST {
         while (nodeIndex != null && nodeIndex.id != value) {
             this.#res = this.#paintNode(nodeIndex.id, animMultiplier++, "#ff7278")
             if (value <= nodeIndex.id) {
-                if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[0].id)) {
+                if (nodeIndex.children === undefined || nodeIndex.children[0].id == "empty") {
                     return nodeIndex
                 }
                 this.#paintLink(nodeIndex.id + "left", animMultiplier++, "#ff7278")
                 nodeIndex = nodeIndex.children[0]
 
             } else {
-                if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[1].id)) {
+                if (nodeIndex.children === undefined || nodeIndex.children[1].id == "empty") {
                     return nodeIndex
                 }
                 this.#paintLink(nodeIndex.id + "right", animMultiplier++, "#ff7278")
@@ -89,19 +89,19 @@ class VisualBST {
             d.children = [];
             if (d.left) {
                 d.children.push(d.left);
-                if (exclusiveOR(d.left, d.right)) {
+                if (XOR(d.left, d.right)) {
                     d.children.push(new Node("empty"));
                 }
             }
             if (d.right) {
-                if (exclusiveOR(d.left, d.right)) {
+                if (XOR(d.left, d.right)) {
                     d.children.push(new Node("empty"));
                 }
                 d.children.push(d.right);
             }
             return d.children;
         });
-        this.treemap(this.root);
+        this.tree(this.root);
         this.#drawAddedNodes()
         this.#drawAddedLinks()
         this.#updateLinkIdentifiers()
@@ -131,11 +131,11 @@ class VisualBST {
             })
             .enter()
             .append("g")
-            .attr("class", function (d) {
-                return matchEmpty(d.id) ? "hidden" : "node"
-            })
             .attr("id", (d) => {
-                return "node-" + d.id
+                return d.id == "empty" ? d.id : "node-" + d.id
+            })
+            .attr("class", function (d) {
+                return d.id == "empty" ? "hidden" : "node"
             })
             .attr("transform", function (d) {
                 if (d.parent != null) {
@@ -162,14 +162,13 @@ class VisualBST {
             .attr('r', 20)
             .attr('cursor', 'pointer');
 
-        //Leere Knoten werden initial gezeichnet, dann aber direkt entfernt(sonst ist Kindknoten direkt gerade unter Elternknoten)
+        //Leere Knoten werden initial gezeichnet, dann aber direkt entfernt
         this.#removeElementsWithHiddenClass()
     }
 
     #drawAddedLinks() {
         let root = this.root
         let links = this.root.descendants().slice(1);
-        console.log(links);
         var link = this.svg.selectAll('path.link')
             .data(links, function (d) {
                 return d.id;
@@ -183,7 +182,7 @@ class VisualBST {
                 return "link-" + d.parent.id + "right"
             })
             .attr("class", function (d) {
-                return matchEmpty(d.id) ? "hidden" : "link"
+                return d.id == "empty" ? "hidden" : "link"
             })
             .attr('d', function (d) {
                 var o = { x: root.x0, y: root.y0 };
@@ -285,8 +284,8 @@ class VisualBST {
         return new Promise((resolve) => {
             d3.select("g#node-" + nodeID + ">circle")
                 .transition()
-                .duration(750)
-                .delay(740 * animMultiplier)
+                .duration(this.#animDuration)
+                .delay(this.#animDuration * animMultiplier)
                 .style("fill", fillColor)
                 .on("end", function () { resolve() })
         })
@@ -296,8 +295,8 @@ class VisualBST {
         return new Promise((resolve) => {
             d3.select("#link-" + linkID)
                 .transition()
-                .duration(750)
-                .delay(740 * animMultiplier)
+                .duration(this.#animDuration)
+                .delay(this.#animDuration * animMultiplier)
                 .style("stroke", fillColor)
                 .on("end", function () { resolve() })
         })
@@ -326,8 +325,8 @@ function matchNumber(value) {
 }
 
 //XOR damit empty eingefügt wird
-function exclusiveOR(a, b) {
-    return (a || b) && !(a && b);
+function XOR(x, y) {
+    return (x || y) && !(x && y);
 }
 
 function drawDiagonalInSVG(start, end) {

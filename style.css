@@ -21,6 +21,17 @@ circle {
     stroke-width: 2px;
 }
 
+path.hidden {
+    fill: none;
+    stroke: #494949;
+    stroke-width: 2px;
+}
+
+g.hidden>circle {
+    fill: #ffffff;
+    stroke: #494949;
+    stroke-width: 2px;
+}
 /* Inputs */
 
 .inputs{
