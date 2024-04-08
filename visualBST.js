@@ -13,6 +13,7 @@ class VisualBST {
             .attr("transform", "translate(0, 40)");
         this.tree = d3.tree().size([this.width, this.height]);
         this.updateHierarchy()
+        this.#drawAddedNodes()
     }
 
     searchVisually(value) {
@@ -53,6 +54,11 @@ class VisualBST {
 
         this.#res.then(() => {
             this.updateHierarchy()
+            if (value == this.root.id) {
+                this.#deleteOldNodes()
+            }
+            this.#drawAddedLinks()
+            this.#updateElementPositions()
         })
     }
 
@@ -62,6 +68,10 @@ class VisualBST {
 
         this.#res.then(() => {
             this.updateHierarchy()
+            this.#deleteOldNodes()
+            this.#deleteOldLinks()
+            this.#updateElementPositions()
+            this.#updateLinkIdentifiers()
         })
     }
 
@@ -70,18 +80,6 @@ class VisualBST {
         this.#res.then(() => {
             this.#resetAnimation()
         })
-    }
-
-    updateNodes() {
-        let nodes = this.root.descendants()
-        var node = d3.selectAll('g.node>text')
-            .data(nodes, function (individualNode) {
-                return individualNode.id = individualNode.data.key
-            })
-            .attr("text-anchor", "middle")
-            .text((d) => { return d.id });
-        console.log("node");
-        console.log(node);
     }
 
     updateHierarchy() {
@@ -102,9 +100,11 @@ class VisualBST {
             return d.children;
         });
         this.tree(this.root);
+        //leere Wurzel wird immer gezeichnet
         this.#drawAddedNodes()
-        this.#drawAddedLinks()
-        this.#updateLinkIdentifiers()
+    }
+
+    #updateElementPositions() {
         let res1 = this.#updatePositionForAllNodes()
         let res2 = this.#updatePositionForAllLinks()
         res1.then(() => {
@@ -112,13 +112,9 @@ class VisualBST {
                 this.#resetAnimation()
             })
         })
-        this.#deleteOldNodes()
-        this.#deleteOldLinks()
-
     }
 
     #drawAddedNodes() {
-        let root = this.root
         let nodes = this.root.descendants()
 
         nodes.forEach(function (node) {
@@ -137,11 +133,11 @@ class VisualBST {
             .attr("class", function (d) {
                 return d.id == "empty" ? "hidden" : "node"
             })
-            .attr("transform", function (d) {
+            .attr("transform",  (d) => {
                 if (d.parent != null) {
                     return `translate(${d.parent.x}, ${d.parent.y})`
                 }
-                return `translate(${root.x}, ${root.y})`
+                return `translate(${this.root.x}, ${this.root.y})`
             });
 
 
@@ -167,7 +163,6 @@ class VisualBST {
     }
 
     #drawAddedLinks() {
-        let root = this.root
         let links = this.root.descendants().slice(1);
         var link = this.svg.selectAll('path.link')
             .data(links, function (d) {
@@ -184,18 +179,9 @@ class VisualBST {
             .attr("class", function (d) {
                 return d.id == "empty" ? "hidden" : "link"
             })
-            .attr('d', function (d) {
-                var o = { x: root.x0, y: root.y0 };
-                if (d.parent != null) {
-                    var o = { x: d.parent.x, y: d.parent.y };
-                }
-                return drawDiagonalInSVG(o, o);
+            .attr('d', (d) => {
+                return drawDiagonalInSVG(d.parent, d.parent);
             })
-        link.transition()
-            .duration(this.#animDuration)
-            .attr('d', function (d) {
-                return drawDiagonalInSVG(d, d.parent)
-            });
 
         //Gleiche wie bei Nodes
         this.#removeElementsWithHiddenClass()
@@ -220,6 +206,7 @@ class VisualBST {
         return new Promise((resolve) => {
             this.svg.selectAll('path.link')
                 .transition()
+                .duration(this.#animDuration)
                 .attr('d', function (d) { return drawDiagonalInSVG(d, d.parent) })
                 .on("end", () => {
                     resolve()
