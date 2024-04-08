@@ -17,46 +17,48 @@ class VisualBST {
     }
 
     searchVisually(value) {
-        let animMultiplier = 1;
-        let nodeIndex = this.root;
-        while (nodeIndex != null && nodeIndex.id != value) {
-            this.#res = this.#paintNode(nodeIndex.id, animMultiplier++, "#ff7278")
-            if (value <= nodeIndex.id) {
-                if (nodeIndex.children === undefined || nodeIndex.children[0].id == "empty") {
-                    return nodeIndex
-                }
-                this.#paintLink(nodeIndex.id + "left", animMultiplier++, "#ff7278")
-                nodeIndex = nodeIndex.children[0]
+        return new Promise(async (resolve) => {
+            let nodeIndex = this.root;
+            while (nodeIndex != null && nodeIndex.id != value) {
+                await this.#paintNode(nodeIndex.id, "#ff7278")
+                if (value <= nodeIndex.id) {
+                    if (nodeIndex.children == undefined || nodeIndex.children[0].id == "empty") {
+                        resolve(nodeIndex)
+                    }
+                    await this.#paintLink(nodeIndex.id + "left", "#ff7278")
+                    nodeIndex = nodeIndex.children[0]
 
-            } else {
-                if (nodeIndex.children === undefined || nodeIndex.children[1].id == "empty") {
-                    return nodeIndex
+                } else {
+                    if (nodeIndex.children == undefined || nodeIndex.children[1].id == "empty") {
+                        resolve(nodeIndex)
+                    }
+                    await this.#paintLink(nodeIndex.id + "right", "#ff7278")
+                    nodeIndex = nodeIndex.children[1]
                 }
-                this.#paintLink(nodeIndex.id + "right", animMultiplier++, "#ff7278")
-                nodeIndex = nodeIndex.children[1]
             }
-        }
-
-        // muss innerhalb dieser Funktion sein wegen fortlaufendem animMultiplier
-        if (nodeIndex.id == value) {
-            this.#res = this.#paintNode(nodeIndex.id, animMultiplier++, "#23fd71")
-        }
-        return nodeIndex;
+            resolve(nodeIndex)
+        })
     }
 
-    insert(value) {
+    async insert(value) {
         if (!matchNumber(value)) {
             alert("Wert muss Zahl < 1000 und > 0 sein!");
             return
         }
 
-        this.search(value)
+        let res = this.searchVisually(value)
 
-        this.#res.then(() => {
-            this.updateHierarchy()
-            if (value == this.root.id) {
-                this.#deleteOldNodes()
+        res.then(async (foundNode) => {
+            if (foundNode.id == value) {
+                await this.#paintNode(foundNode.id, "#23fd71")
+                this.#resetAnimation()
+                return
             }
+            if (this.root.id === undefined) {
+                await this.#resetAnimation()
+                this.#deleteRootNode()
+            }
+            this.updateHierarchy()
             this.#drawAddedLinks()
             this.#updateElementPositions()
         })
@@ -76,9 +78,12 @@ class VisualBST {
     }
 
     search(value) {
-        this.searchVisually(value)
-        this.#res.then(() => {
-            this.#resetAnimation()
+        let res = this.searchVisually(value)
+        res.then(async (foundNode) => {
+            if (foundNode.id == value) {
+                await this.#paintNode(foundNode.id, "#23fd71")
+                this.#resetAnimation()
+            }
         })
     }
 
@@ -114,6 +119,11 @@ class VisualBST {
         })
     }
 
+    #deleteRootNode() {
+        d3.select("#node-undefined")
+            .remove()
+    }
+
     #drawAddedNodes() {
         let nodes = this.root.descendants()
 
@@ -133,7 +143,7 @@ class VisualBST {
             .attr("class", function (d) {
                 return d.id == "empty" ? "hidden" : "node"
             })
-            .attr("transform",  (d) => {
+            .attr("transform", (d) => {
                 if (d.parent != null) {
                     return `translate(${d.parent.x}, ${d.parent.y})`
                 }
@@ -250,6 +260,7 @@ class VisualBST {
     }
 
     #resetAnimation() {
+        return new Promise((resolve) => {
         this.svg.selectAll("path")
             .transition()
             .duration(this.#animDuration)
@@ -259,6 +270,10 @@ class VisualBST {
             .transition()
             .duration(this.#animDuration)
             .style("fill", null)
+            .on("end", function() {
+                resolve()
+            })
+        })
     }
 
 
@@ -267,23 +282,21 @@ class VisualBST {
             .remove()
     }
 
-    #paintNode(nodeID, animMultiplier, fillColor) {
+    #paintNode(nodeID, fillColor) {
         return new Promise((resolve) => {
             d3.select("g#node-" + nodeID + ">circle")
                 .transition()
                 .duration(this.#animDuration)
-                .delay(this.#animDuration * animMultiplier)
                 .style("fill", fillColor)
                 .on("end", function () { resolve() })
         })
     }
 
-    #paintLink(linkID, animMultiplier, fillColor) {
+    #paintLink(linkID, fillColor) {
         return new Promise((resolve) => {
             d3.select("#link-" + linkID)
                 .transition()
                 .duration(this.#animDuration)
-                .delay(this.#animDuration * animMultiplier)
                 .style("stroke", fillColor)
                 .on("end", function () { resolve() })
         })
