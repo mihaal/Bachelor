@@ -1,7 +1,6 @@
 class VisualBST {
     #animDuration = 700;
     root;
-    #res;
     constructor(window, binarySearchTree) {
         this.width = window.innerWidth
         this.height = window.innerHeight - 200
@@ -13,7 +12,6 @@ class VisualBST {
             .attr("transform", "translate(0, 40)");
         this.tree = d3.tree().size([this.width, this.height]);
         this.updateHierarchy()
-        this.#drawAddedNodes()
     }
 
     searchVisually(value) {
@@ -37,9 +35,9 @@ class VisualBST {
                 }
             }
             if (nodeIndex.id == value) {
-                this.#res = this.#paintNode(nodeIndex.id, "#23fd71")
-                resolve(nodeIndex)
+                await this.#paintNode(nodeIndex.id, "#23fd71")
             }
+            resolve(nodeIndex)
         })
     }
 
@@ -49,50 +47,37 @@ class VisualBST {
             return
         }
 
-        let res = this.searchVisually(value)
+        let foundNode = await this.searchVisually(value)
 
-        res.then(async (foundNode) => {
-            if (foundNode.id == value) {
-                await this.#paintNode(foundNode.id, "#23fd71")
-                this.#resetAnimation()
-                this.#drawAddedNodes()
-                return
-            }
-            else if (this.root.id === undefined) {
-                await this.#resetAnimation()
-                this.#deleteRootNode()
-            }
-            this.updateHierarchy()
-            this.#drawAddedLinks()
-            await this.#updatePositionForAllElements()
+        if (foundNode.id == value) {
             this.#resetAnimation()
-        })
+            return
+        }
+        else if (this.root.id === undefined) {
+            await this.#resetAnimation()
+            this.#deleteRootNode()
+        }
+        this.updateHierarchy()
+        this.#drawAddedLinks()
+        await this.#updatePositionForAllElements()
+        this.#resetAnimation()
     }
 
     // man darf nach allem suchen (auch buchstaben), findet halt nur nix
-    deleteNode(value) {
-        let res = this.searchVisually(value)
-
-        res.then(async (foundNode) => {
-            if (foundNode.id != value) return
-            await this.#paintNode(foundNode.id, "#23fd71")
-            await this.#resetAnimation()
-            this.updateHierarchy()
-            this.#deleteOldNodes()
-            this.#deleteOldLinks()
-            this.#updateLinkIdentifiers()
-            this.#updatePositionForAllElements()
-        })
+    async deleteNode(value) {
+        let foundNode = await this.searchVisually(value)
+        await this.#resetAnimation()
+        if (foundNode.id != value) return
+        this.updateHierarchy()
+        this.#deleteOldNodes()
+        this.#deleteOldLinks()
+        this.#updateLinkIdentifiers()
+        this.#updatePositionForAllElements()
     }
 
-    search(value) {
-        let res = this.searchVisually(value)
-        res.then(async (foundNode) => {
-            if (foundNode.id == value) {
-                await this.#paintNode(foundNode.id, "#23fd71")
-                this.#resetAnimation()
-            }
-        })
+    async search(value) {
+        await this.searchVisually(value)
+        this.#resetAnimation()
     }
 
     updateHierarchy() {
@@ -136,7 +121,7 @@ class VisualBST {
             .enter()
             .append("g")
             .attr("id", (d) => {
-                return d.id == "e" ? d.id : "node-" + d.id
+                return "node-" + d.id
             })
             .attr("class", function (d) {
                 return d.id == "e" ? "hidden" : "node"
@@ -191,14 +176,17 @@ class VisualBST {
         return new Promise((resolve) => {
             this.svg.selectAll("g.node")
                 .transition()
-                .duration(this.#animDuration)
+                .duration(700)
                 .attr("transform", function (d) {
-                    return "translate(" + d.x + "," + d.y + ")"
+                    return `translate(${d.x}, ${d.y})`
+                })
+                .on("end", () => {
+                    resolve()
                 })
 
             this.svg.selectAll('path.link')
                 .transition()
-                .duration(this.#animDuration)
+                .duration(700)
                 .attr('d', function (d) { return drawDiagonalInSVG(d.parent, d) })
                 .on("end", () => {
                     resolve()
@@ -208,10 +196,6 @@ class VisualBST {
 
     #deleteOldNodes() {
         let nodes = this.root.descendants()
-
-        nodes.forEach(function (node) {
-            node.y = node.depth * 100
-        });
 
         this.svg.selectAll('g.node')
             .data(nodes, function (individualNode) {
