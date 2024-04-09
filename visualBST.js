@@ -22,14 +22,14 @@ class VisualBST {
             while (nodeIndex != null && nodeIndex.id != value) {
                 await this.#paintNode(nodeIndex.id, "#ff7278")
                 if (value <= nodeIndex.id) {
-                    if (nodeIndex.children == undefined || nodeIndex.children[0].id == "empty") {
+                    if (nodeIndex.children == undefined || nodeIndex.children[0].id == "e") {
                         resolve(nodeIndex)
                     }
                     await this.#paintLink(nodeIndex.id + "left", "#ff7278")
                     nodeIndex = nodeIndex.children[0]
 
                 } else {
-                    if (nodeIndex.children == undefined || nodeIndex.children[1].id == "empty") {
+                    if (nodeIndex.children == undefined || nodeIndex.children[1].id == "e") {
                         resolve(nodeIndex)
                     }
                     await this.#paintLink(nodeIndex.id + "right", "#ff7278")
@@ -101,12 +101,12 @@ class VisualBST {
             if (d.left) {
                 d.children.push(d.left);
                 if (XOR(d.left, d.right)) {
-                    d.children.push(new Node("empty"));
+                    d.children.push(new Node("e"));
                 }
             }
             if (d.right) {
                 if (XOR(d.left, d.right)) {
-                    d.children.push(new Node("empty"));
+                    d.children.push(new Node("e"));
                 }
                 d.children.push(d.right);
             }
@@ -136,10 +136,10 @@ class VisualBST {
             .enter()
             .append("g")
             .attr("id", (d) => {
-                return d.id == "empty" ? d.id : "node-" + d.id
+                return d.id == "e" ? d.id : "node-" + d.id
             })
             .attr("class", function (d) {
-                return d.id == "empty" ? "hidden" : "node"
+                return d.id == "e" ? "hidden" : "node"
             })
             .attr("transform", (d) => {
                 if (d.parent != null) {
@@ -177,7 +177,7 @@ class VisualBST {
                 return "link-" + d.parent.id + "right"
             })
             .attr("class", function (d) {
-                return d.id == "empty" ? "hidden" : "link"
+                return d.id == "e" ? "hidden" : "link"
             })
             .attr('d', (d) => {
                 return drawDiagonalInSVG(d.parent, d.parent); // Für Start der Animation
@@ -289,7 +289,7 @@ class VisualBST {
 // UTILITY FUNCTIONS
 // 
 function matchEmpty(value) {
-    let regex = /^empty.*$/;
+    let regex = /^e.*$/;
     let valueAsString = "" + value
     if (valueAsString.match(regex)) {
         return true
