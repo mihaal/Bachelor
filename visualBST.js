@@ -15,27 +15,26 @@ class VisualBST {
     }
 
     async searchVisually(value) {
-        let nodeIndex = this.root;
-        while (nodeIndex != null && nodeIndex.id != value) {
-            await this.#paintNode(nodeIndex.id, "#ff7278")
-            if (value <= nodeIndex.id) {
-                if (nodeIndex.children == undefined || nodeIndex.children[0].id == "e") {
-                    return nodeIndex
+        let node = this.root;
+        while (node != null && node.id != value) {
+            await this.#paintNode(node.id, "#ff7278")
+            if (value < node.id) {
+                if (node.children == undefined || node.children[0].id == "e") {
+                    return 
                 }
-                await this.#paintLink(nodeIndex.id + "left", "#ff7278")
-                nodeIndex = nodeIndex.children[0]
+                await this.#paintLink(node.id + "left", "#ff7278")
+                node = node.children[0]
 
             } else {
-                if (nodeIndex.children == undefined || nodeIndex.children[1].id == "e") {
-                    return nodeIndex
+                if (node.children == undefined || node.children[1].id == "e") {
+                    return 
                 }
-                await this.#paintLink(nodeIndex.id + "right", "#ff7278")
-                nodeIndex = nodeIndex.children[1]
+                await this.#paintLink(node.id + "right", "#ff7278")
+                node = node.children[1]
             }
         }
-        if (nodeIndex.id == value) {
-            await this.#paintNode(nodeIndex.id, "#23fd71")
-            return nodeIndex
+        if (node.id == value) {
+            await this.#paintNode(node.id, "#23fd71")
         }
     }
 
@@ -48,7 +47,7 @@ class VisualBST {
         let foundNode = await this.searchVisually(value)
         await this.#resetAnimation()
 
-        if (foundNode.id == value) return
+        // if (foundNode.id == value) return
         if (this.root.id === undefined) {
             this.#deleteRootNode()
         }
@@ -61,7 +60,8 @@ class VisualBST {
     async deleteNode(value) {
         let foundNode = await this.searchVisually(value)
         await this.#resetAnimation()
-        if (foundNode.id != value) return
+
+        // if (foundNode.id != value) return
         this.updateHierarchy()
         this.#deleteOldNodes()
         this.#deleteOldLinks()
@@ -95,7 +95,7 @@ class VisualBST {
         
         //Falls BST komplett leer, leerer Knoten
         if (this.root.id == undefined) {
-            this.#drawAddedNodes()   
+            this.#drawAddedNodes()
         }
     }
 
@@ -226,7 +226,7 @@ class VisualBST {
         return new Promise((resolve) => {
             this.svg.selectAll("path")
                 .transition()
-                .duration(this.#animDuration)
+                .duration(700)
                 .style("stroke", null)
                 .on("end", function () {
                     resolve()
@@ -234,7 +234,7 @@ class VisualBST {
 
             this.svg.selectAll("circle")
                 .transition()
-                .duration(this.#animDuration)
+                .duration(700)
                 .style("fill", null)
                 .on("end", function () {
                     resolve()
