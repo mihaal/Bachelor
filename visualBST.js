@@ -46,22 +46,18 @@ class VisualBST {
         }
 
         let foundNode = await this.searchVisually(value)
+        await this.#resetAnimation()
 
-        if (foundNode.id == value) {
-            this.#resetAnimation()
-            return
-        }
-        else if (this.root.id === undefined) {
-            await this.#resetAnimation()
+        if (foundNode.id == value) return
+        if (this.root.id === undefined) {
             this.#deleteRootNode()
         }
         this.updateHierarchy()
         this.#drawAddedLinks()
-        await this.#updatePositionForAllElements()
-        this.#resetAnimation()
+        this.#updatePositionForAllElements()
     }
 
-    // man darf nach allem suchen (auch buchstaben), findet halt nur nix
+    
     async deleteNode(value) {
         let foundNode = await this.searchVisually(value)
         await this.#resetAnimation()
@@ -96,8 +92,11 @@ class VisualBST {
             return d.children;
         });
         this.tree(this.root);
-        //leere Wurzel wird immer gezeichnet
-        this.#drawAddedNodes()
+        
+        //Falls BST komplett leer, leerer Knoten
+        if (this.root.id == undefined) {
+            this.#drawAddedNodes()   
+        }
     }
 
     #deleteRootNode() {
@@ -273,14 +272,6 @@ class VisualBST {
 // 
 // UTILITY FUNCTIONS
 // 
-function matchEmpty(value) {
-    let regex = /^e.*$/;
-    let valueAsString = "" + value
-    if (valueAsString.match(regex)) {
-        return true
-    }
-    return false
-}
 
 function matchNumber(value) {
     let regex = /^[0-9]{1,3}$/;
