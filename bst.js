@@ -13,31 +13,8 @@ let handler2 = {
                 return value
             //left, right und parent 
             default:
-                if (value != null) {
-                    // visualBST.searchVisually(value.key)
-                }
                 return value
         }
-    },
-    set(obj, prop, value) {
-        switch (prop) {
-            case "key":
-                obj[prop] = value
-                return true
-            case "left":
-                obj[prop] = value
-                return true
-            case "right":
-                obj[prop] = value
-                return true
-            case "parent":
-                obj[prop] = value
-                return true
-            case "children":
-                obj[prop] = value
-                return true
-        }
-        return false;
     }
 }
 
