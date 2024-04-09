@@ -150,21 +150,13 @@ class VisualBST {
 
 
         node.append("circle")
+            .attr('r', 20)
+            .attr('cursor', 'pointer');
 
         node.append("text")
             .attr("dy", ".35em")
             .attr("text-anchor", "middle")
             .text((d) => { return d.id });
-
-        node.transition()
-            .duration(this.#animDuration)
-            .attr("transform", (d) => {
-                return "translate(" + d.x + "," + d.y + ")";
-            });
-
-        node.select('circle')
-            .attr('r', 20)
-            .attr('cursor', 'pointer');
 
         //Leere Knoten werden initial gezeichnet, dann aber direkt entfernt
         this.#removeElementsWithHiddenClass()
@@ -188,7 +180,7 @@ class VisualBST {
                 return d.id == "empty" ? "hidden" : "link"
             })
             .attr('d', (d) => {
-                return drawDiagonalInSVG(d.parent, d.parent);
+                return drawDiagonalInSVG(d.parent, d.parent); // Für Start der Animation
             })
 
         //Gleiche wie bei Nodes
@@ -207,7 +199,7 @@ class VisualBST {
             this.svg.selectAll('path.link')
                 .transition()
                 .duration(this.#animDuration)
-                .attr('d', function (d) { return drawDiagonalInSVG(d, d.parent) })
+                .attr('d', function (d) { return drawDiagonalInSVG(d.parent, d) })
                 .on("end", () => {
                     resolve()
                 })
