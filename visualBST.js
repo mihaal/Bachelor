@@ -14,31 +14,29 @@ class VisualBST {
         this.updateHierarchy()
     }
 
-    searchVisually(value) {
-        return new Promise(async (resolve) => {
-            let nodeIndex = this.root;
-            while (nodeIndex != null && nodeIndex.id != value) {
-                await this.#paintNode(nodeIndex.id, "#ff7278")
-                if (value <= nodeIndex.id) {
-                    if (nodeIndex.children == undefined || nodeIndex.children[0].id == "e") {
-                        resolve(nodeIndex)
-                    }
-                    await this.#paintLink(nodeIndex.id + "left", "#ff7278")
-                    nodeIndex = nodeIndex.children[0]
-
-                } else {
-                    if (nodeIndex.children == undefined || nodeIndex.children[1].id == "e") {
-                        resolve(nodeIndex)
-                    }
-                    await this.#paintLink(nodeIndex.id + "right", "#ff7278")
-                    nodeIndex = nodeIndex.children[1]
+    async searchVisually(value) {
+        let nodeIndex = this.root;
+        while (nodeIndex != null && nodeIndex.id != value) {
+            await this.#paintNode(nodeIndex.id, "#ff7278")
+            if (value <= nodeIndex.id) {
+                if (nodeIndex.children == undefined || nodeIndex.children[0].id == "e") {
+                    return nodeIndex
                 }
+                await this.#paintLink(nodeIndex.id + "left", "#ff7278")
+                nodeIndex = nodeIndex.children[0]
+
+            } else {
+                if (nodeIndex.children == undefined || nodeIndex.children[1].id == "e") {
+                    return nodeIndex
+                }
+                await this.#paintLink(nodeIndex.id + "right", "#ff7278")
+                nodeIndex = nodeIndex.children[1]
             }
-            if (nodeIndex.id == value) {
-                await this.#paintNode(nodeIndex.id, "#23fd71")
-            }
-            resolve(nodeIndex)
-        })
+        }
+        if (nodeIndex.id == value) {
+            await this.#paintNode(nodeIndex.id, "#23fd71")
+            return nodeIndex
+        }
     }
 
     async insert(value) {
@@ -231,6 +229,9 @@ class VisualBST {
                 .transition()
                 .duration(this.#animDuration)
                 .style("stroke", null)
+                .on("end", function () {
+                    resolve()
+                })
 
             this.svg.selectAll("circle")
                 .transition()
