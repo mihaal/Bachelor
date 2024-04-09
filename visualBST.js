@@ -36,7 +36,10 @@ class VisualBST {
                     nodeIndex = nodeIndex.children[1]
                 }
             }
-            resolve(nodeIndex)
+            if (nodeIndex.id == value) {
+                this.#res = this.#paintNode(nodeIndex.id, "#23fd71")
+                resolve(nodeIndex)
+            }
         })
     }
 
@@ -52,28 +55,33 @@ class VisualBST {
             if (foundNode.id == value) {
                 await this.#paintNode(foundNode.id, "#23fd71")
                 this.#resetAnimation()
+                this.#drawAddedNodes()
                 return
             }
-            if (this.root.id === undefined) {
+            else if (this.root.id === undefined) {
                 await this.#resetAnimation()
                 this.#deleteRootNode()
             }
             this.updateHierarchy()
             this.#drawAddedLinks()
-            this.#updateElementPositions()
+            await this.#updatePositionForAllElements()
+            this.#resetAnimation()
         })
     }
 
     // man darf nach allem suchen (auch buchstaben), findet halt nur nix
     deleteNode(value) {
-        this.search(value)
+        let res = this.searchVisually(value)
 
-        this.#res.then(() => {
+        res.then(async (foundNode) => {
+            if (foundNode.id != value) return
+            await this.#paintNode(foundNode.id, "#23fd71")
+            await this.#resetAnimation()
             this.updateHierarchy()
             this.#deleteOldNodes()
             this.#deleteOldLinks()
-            this.#updateElementPositions()
             this.#updateLinkIdentifiers()
+            this.#updatePositionForAllElements()
         })
     }
 
@@ -107,16 +115,6 @@ class VisualBST {
         this.tree(this.root);
         //leere Wurzel wird immer gezeichnet
         this.#drawAddedNodes()
-    }
-
-    #updateElementPositions() {
-        let res1 = this.#updatePositionForAllNodes()
-        let res2 = this.#updatePositionForAllLinks()
-        res1.then(() => {
-            res2.then(() => {
-                this.#resetAnimation()
-            })
-        })
     }
 
     #deleteRootNode() {
@@ -174,7 +172,7 @@ class VisualBST {
 
     #drawAddedLinks() {
         let links = this.root.descendants().slice(1);
-        var link = this.svg.selectAll('path.link')
+        this.svg.selectAll('path.link')
             .data(links, function (d) {
                 return d.id;
             })
@@ -197,7 +195,7 @@ class VisualBST {
         this.#removeElementsWithHiddenClass()
     }
 
-    #updatePositionForAllNodes() {
+    #updatePositionForAllElements() {
         return new Promise((resolve) => {
             this.svg.selectAll("g.node")
                 .transition()
@@ -205,15 +203,7 @@ class VisualBST {
                 .attr("transform", function (d) {
                     return "translate(" + d.x + "," + d.y + ")"
                 })
-                .on("end", () => {
-                    resolve()
-                })
-        })
-    }
 
-    #updatePositionForAllLinks() {
-
-        return new Promise((resolve) => {
             this.svg.selectAll('path.link')
                 .transition()
                 .duration(this.#animDuration)
@@ -261,18 +251,18 @@ class VisualBST {
 
     #resetAnimation() {
         return new Promise((resolve) => {
-        this.svg.selectAll("path")
-            .transition()
-            .duration(this.#animDuration)
-            .style("stroke", null)
+            this.svg.selectAll("path")
+                .transition()
+                .duration(this.#animDuration)
+                .style("stroke", null)
 
-        this.svg.selectAll("circle")
-            .transition()
-            .duration(this.#animDuration)
-            .style("fill", null)
-            .on("end", function() {
-                resolve()
-            })
+            this.svg.selectAll("circle")
+                .transition()
+                .duration(this.#animDuration)
+                .style("fill", null)
+                .on("end", function () {
+                    resolve()
+                })
         })
     }
 

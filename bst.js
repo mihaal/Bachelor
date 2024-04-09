@@ -14,7 +14,7 @@ let handler2 = {
             //left, right und parent 
             default:
                 if (value != null) {
-                    visualBST.search(value.key)
+                    // visualBST.searchVisually(value.key)
                 }
                 return value
         }
