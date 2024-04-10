@@ -2,19 +2,32 @@ let handler2 = {
     get(target, prop, receiver) {
         let value = target[prop]
         if (value instanceof Function) {
-            return function (...args) {
-                return value.apply(this === receiver ? target : this, args);
+            return async function (...args) {
+                let ret;
+                if (!(prop == "insert" || prop == "deleteNode")) {
+                    return value.apply(this === receiver ? target : this, args);
+                }
+                await searchVisually(args)
+                await resetAnimation()
+                ret = value.apply(this === receiver ? target : this, args);
+                updateHierarchy(target)
+
+                switch (prop) {
+                    case "insert":
+                        await updatePositionForExistingElements()
+                        await drawAddedLinks()
+                        await drawAddedNodes()
+                        return ret;
+                    case "deleteNode":
+                        await deleteOldNodes()
+                        await deleteOldLinks()
+                        updatePositionForExistingElements()
+                        updateLinkIdentifiers()
+                        return ret
+                }
             }
         }
-        switch (prop) {
-            case "key":
-                return value
-            case "children":
-                return value
-            //left, right und parent 
-            default:
-                return value
-        }
+        return value
     }
 }
 
@@ -30,6 +43,7 @@ class Node {
 class BinarySearchTree {
     constructor() {
         this.root = null;
+        return new Proxy(this, handler2)
     }
 
     search(key) {
@@ -47,7 +61,6 @@ class BinarySearchTree {
 
     //iterative
     insert(value) {
-        if (!matchNumber(value)) return
         let node = this.search(value)
         if (node != null) return
         node = new Node(parseInt(value));
@@ -79,7 +92,7 @@ class BinarySearchTree {
         }
     }
 
-    transPlantSubtree(u, v) {
+    transplantSubtree(u, v) {
         if (u.parent == null) {
             this.root = v
         }
@@ -105,19 +118,19 @@ class BinarySearchTree {
         let node = this.search(value)
         if (node == null) return
         else if (node.left == null) {
-            this.transPlantSubtree(node, node.right)
+            this.transplantSubtree(node, node.right)
         }
         else if (node.right == null) {
-            this.transPlantSubtree(node, node.left)
+            this.transplantSubtree(node, node.left)
         }
         else {
             let y = this.treeMinimum(node.right)
             if (y.parent != node) {
-                this.transPlantSubtree(y, y.right)
+                this.transplantSubtree(y, y.right)
                 y.right = node.right
                 y.right.parent = y
             }
-            this.transPlantSubtree(node, y)
+            this.transplantSubtree(node, y)
             y.left = node.left
             y.left.parent = y
         }

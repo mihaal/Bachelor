@@ -16,30 +16,29 @@ const numberInput = document.getElementById("numberInput");
 
 updateHierarchy(bst)
 
+let numbers = []
+
+for (let index = 0; index < 10; index++) {
+    bst.insert(Math.floor(Math.random() * 999));
+}
+
 insertButton.addEventListener("click", async function () {
     let value = numberInput.value
+    if (!matchNumber(value)) {
+        alert("Wert muss Zahl < 1000 und > 0 sein!");
+        return
+    }
 
     bst.insert(value)
-    await searchVisually(value)
-    await resetAnimation()
-    updateHierarchy(bst)
-
-    await updatePositionForExistingElements()
-    await drawAddedLinks()
-    await drawAddedNodes()
 })
 
 deleteButton.addEventListener("click", async function () {
     let value = numberInput.value
+    if (!matchNumber(value)) {
+        alert("Wert muss Zahl < 1000 und > 0 sein!");
+        return
+    }
     bst.deleteNode(value)
-    await searchVisually(value)
-    await resetAnimation()
-    updateHierarchy(bst)
-
-    await deleteOldNodes()
-    await deleteOldLinks()
-    updatePositionForExistingElements()
-    updateLinkIdentifiers()
 })
 
 async function searchVisually(value) {
@@ -66,6 +65,7 @@ function childNotExistent(node, child) {
     return node.children == undefined || node.children[child].id == "e"
 }
 
+//Löschen
 async function insert(value) {
     if (!matchNumber(value)) {
         alert("Wert muss Zahl < 1000 und > 0 sein!");
@@ -81,6 +81,7 @@ async function insert(value) {
     await drawAddedLinks()
 }
 
+//Löschen
 async function deleteNode(value) {
     await searchVisually(value)
     await resetAnimation()
@@ -92,6 +93,7 @@ async function deleteNode(value) {
     updateLinkIdentifiers()
 }
 
+//Löschen
 async function search(value) {
     await searchVisually(value)
     resetAnimation()
@@ -115,11 +117,6 @@ function updateHierarchy(bst) {
         return d.children;
     });
     tree(root);
-}
-
-function deleteRootNode() {
-    d3.select("#node-undefined")
-        .remove()
 }
 
 function drawAddedNodes() {
@@ -189,7 +186,6 @@ function updatePositionForExistingElements() {
             .transition()
             .duration(700)
             .attr('d', function (d) {
-                console.log(d.parent);
                 return drawDiagonalInSVG(d.parent, d)
             })
 
@@ -208,8 +204,6 @@ function updatePositionForExistingElements() {
     })
 
 }
-
-
 
 function drawAddedLinks() {
     let links = root.descendants().slice(1);
@@ -236,8 +230,8 @@ function drawAddedLinks() {
         .attr('d', (d) => {
             return drawDiagonalInSVG(d.parent, d.parent); // Für Start der Animation
         })
-
     removeElementsWithHiddenClass()
+    
     return new Promise((resolve) => {
         if (link.data().length == 0) resolve()
         link.transition()
@@ -314,9 +308,7 @@ function resetAnimation() {
             .transition()
             .duration(700)
             .style("stroke", null)
-            .on("end", function () {
-                resolve()
-            })
+            
 
         svg.selectAll("circle")
             .transition()
@@ -347,7 +339,6 @@ function paintNode(nodeID, fillColor) {
 
 function paintLink(linkID, fillColor) {
     return new Promise((resolve) => {
-        console.log(linkID);
         d3.select("#link-" + linkID)
             .transition()
             .duration(animDuration)
