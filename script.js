@@ -1,4 +1,130 @@
-function drawNodes() {
+let width = window.innerWidth
+let height = window.innerHeight - 200
+let bst = new BinarySearchTree()
+let animDuration = 700
+let root;
+let svg = d3.select("body").insert("svg", ":first-child")
+    .attr("height", height)
+    .attr("viewBox", `0 0 ${width} ${height}`)
+    .append("g")
+    .attr("transform", "translate(0, 40)");
+let tree = d3.tree().size([width, height]);
+
+const insertButton = document.getElementById("insertButton");
+const deleteButton = document.getElementById("deleteButton");
+const numberInput = document.getElementById("numberInput");
+
+updateHierarchy(bst)
+drawAddedNodes()
+
+insertButton.addEventListener("click", async function () {
+    let value = numberInput.value
+
+    bst.insert(value)
+    await searchVisually(value)
+    await resetAnimation()
+    updateHierarchy(bst)
+
+    if (value == root.data.key) {
+        deleteRootNode()
+        await drawAddedNodes()
+        return
+    }
+
+    await updatePositionForExistingElements()
+    await drawAddedNodes()
+    await drawAddedLinks()
+    updatePositionForAllElements()
+})
+
+deleteButton.addEventListener("click", function () {
+    bst.deleteNode(numberInput.value)
+    deleteNode(numberInput.value)
+})
+
+async function searchVisually(value) {
+    let node = root;
+    while (node != null && node.id != value) {
+        await paintNode(node.id, "#ff7278")
+        if (value < node.id) {
+            if (childNotExistent(node, 0)) return
+            await paintLink(node.id + "left", "#ff7278")
+            node = node.children[0]
+
+        } else {
+            if (childNotExistent(node, 1)) return
+            await paintLink(node.id + "right", "#ff7278")
+            node = node.children[1]
+        }
+    }
+    if (node.id == value) {
+        await paintNode(node.id, "#23fd71")
+    }
+}
+
+function childNotExistent(node, child) {
+    return node.children == undefined || node.children[child].id == "e"
+}
+
+async function insert(value) {
+    if (!matchNumber(value)) {
+        alert("Wert muss Zahl < 1000 und > 0 sein!");
+        return
+    }
+
+    await searchVisually(value)
+    await resetAnimation()
+    updateHierarchy(bst)
+
+    await updatePositionForExistingNodes()
+    await drawAddedNodes()
+    await drawAddedLinks()
+    updatePositionForAllElements()
+}
+
+async function deleteNode(value) {
+    await searchVisually(value)
+    await resetAnimation()
+
+
+    updateHierarchy(bst)
+    deleteOldNodes()
+    deleteOldLinks()
+    updateLinkIdentifiers()
+    updatePositionForAllElements()
+}
+
+async function search(value) {
+    await searchVisually(value)
+    resetAnimation()
+}
+
+function updateHierarchy(bst) {
+    root = d3.hierarchy(bst.root == null ? {} : bst.root, function (d) {
+        d.children = [];
+        if (d.left) {
+            d.children.push(d.left);
+            if (XOR(d.left, d.right)) {
+                d.children.push(new Node("e"));
+            }
+        }
+        if (d.right) {
+            if (XOR(d.left, d.right)) {
+                d.children.push(new Node("e"));
+            }
+            d.children.push(d.right);
+        }
+        return d.children;
+    });
+    tree(root);
+}
+
+function deleteRootNode() {
+    d3.select("#node-undefined")
+        .remove()
+}
+
+function drawAddedNodes() {
     let nodes = root.descendants()
 
     nodes.forEach(function (node) {
@@ -11,47 +137,138 @@ function drawNodes() {
         })
         .enter()
         .append("g")
-        .attr("class", function (d) {
-            return matchEmpty(d.id) ? "hidden" : "node"
-        })
         .attr("id", (d) => {
             return "node-" + d.id
         })
-        .attr("transform", function (d) {
-            if (d.parent != null) {
-                return `translate(${d.parent.x}, ${d.parent.y})`
-            }
-            return `translate(${root.x}, ${root.y})`
-        });
+        .attr("class", function (d) {
+            return d.id == "e" ? "hidden" : "node"
+        })
+        .attr("transform", (d) => {
+            return `translate(${d.x}, ${d.y})`
+        })
+        .style("opacity", 0)
 
 
     node.append("circle")
+        .attr('r', 20)
+        .attr('cursor', 'pointer');
 
-    // Text in Knoten mit Data/ID
     node.append("text")
         .attr("dy", ".35em")
         .attr("text-anchor", "middle")
         .text((d) => { return d.id });
 
-    node.transition()
-        .duration(animDuration)
-        .attr("transform", (d) => {
-            return "translate(" + d.x + "," + d.y + ")";
-        });
+    removeElementsWithHiddenClass()
 
-    node.select('circle')
-        .attr('r', 20)
-        .attr('cursor', 'pointer');
-    
-    //Leere Knoten werden initial gezeichnet, dann aber direkt entfernt(sonst ist Kindknoten direkt gerade unter Elternknoten)
-    // removeElementsWithHiddenClass()
+    return new Promise((resolve) => {
+        node.transition()
+            .duration(700)
+            .style("opacity", 1)
+            .on("end", function () {
+                resolve()
+            })
+    })
 }
 
-function drawLinks() {
+
+function updatePositionForExistingNodes() {
+    let nodes = root.descendants()
+
+    nodes.forEach(function (node) {
+        node.y = node.depth * 100
+    });
+
+    return new Promise((resolve) => {
+        svg.selectAll("g.node")
+            .data(nodes, function (individualNode) {
+                return individualNode.id = individualNode.data.key
+            })
+            .transition()
+            .duration(700)
+            .attr("transform", function (d) {
+                return `translate(${d.x}, ${d.y})`
+            })
+            .on("end", function () {
+                resolve()
+            })
+    })
+}
+
+function updatePositionForExistingLinks() {
+    let nodes = root.descendants()
+
+    nodes.forEach(function (node) {
+        node.y = node.depth * 100
+    });
+
+    console.log(root.descendants().slice(1));
+
+    return new Promise((resolve) => {
+        svg.selectAll('path.link')
+            .data(nodes.slice(1), function (d) {
+                return d.id = d.data.key
+            })
+            .transition()
+            .duration(700)
+            .attr('d', function (d) { 
+                console.log(d.parent);
+                return drawDiagonalInSVG(d.parent, d) })
+            .on("end", function () {
+                resolve()
+            })
+    })
+}
+
+function updatePositionForExistingElements() {
+    let nodes = root.descendants()
+
+    nodes.forEach(function (node) {
+        node.y = node.depth * 100
+    });
+
+    return new Promise((resolve) => {
+        let links = svg.selectAll('path.link')
+
+        if (links.data().length == 0) resolve()
+        
+        links
+            .data(nodes.slice(1), function (d) {
+                return d.id = d.data.key
+            })
+            .transition()
+            .duration(700)
+            .attr('d', function (d) { 
+                console.log(d.parent);
+                return drawDiagonalInSVG(d.parent, d) })
+
+        svg.selectAll("g.node")
+            .data(nodes, function (d) {
+                return d.id = d.data.key
+            })
+            .transition()
+            .duration(700)
+            .attr("transform", function (d) {
+                return `translate(${d.x}, ${d.y})`
+            })
+            .on("end", function () {
+                resolve()
+            })
+    })
+
+}
+
+
+
+function drawAddedLinks() {
     let links = root.descendants().slice(1);
-    var link = svg.selectAll('path.link')
+
+    links.forEach(function (node) {
+        node.y = node.depth * 100
+    });
+
+    let link = svg.selectAll('path.link')
         .data(links, function (d) {
-            return d.id;
+            return d.id
         })
         .enter()
         .insert("path", "g")
@@ -62,157 +279,44 @@ function drawLinks() {
             return "link-" + d.parent.id + "right"
         })
         .attr("class", function (d) {
-            return matchEmpty(d.id) ? "hidden" : "link"
+            return d.id == "e" ? "hidden" : "link"
         })
-        .attr('d', function (d) {
-            var o = { x: root.x0, y: root.y0 };
-            if (d.parent != null) {
-                var o = { x: d.parent.x, y: d.parent.y };
-            }
-            return drawDiagonal(o, o);
+        .attr('d', (d) => {
+            return drawDiagonalInSVG(d.parent, d.parent); // Für Start der Animation
         })
-
-    link.transition()
-        .duration(animDuration)
-        .attr('d', function (d) {
-            return drawDiagonal(d, d.parent)
-        });
-    
-    //Gleiche wie bei Nodes
-    // removeElementsWithHiddenClass()
-}
-
-
-function removeElementsWithHiddenClass() {
-    d3.selectAll(".hidden")
-        .remove()
-}
-
-// M = Move To = Startpunkt x0 y0 -> Endpunkt x1 y1
-function drawDiagonal(start, end) {
-    return `M ${start.x} ${start.y} ${end.x} ${end.y} `;
-}
-
-//damit empty eingefügt wird
-function myXOR(a, b) {
-    return (a || b) && !(a && b);
-}
-
-
-function searchNodeVisually(value) {
-    let animMultiplier = 1;
-    let nodeIndex = root;
-    while (nodeIndex != null && nodeIndex.id != value) {
-        res = paintNode(nodeIndex.id, animMultiplier++, "#ff7278")
-        if (value <= nodeIndex.id) {
-            if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[0].id)) {
-                return nodeIndex
-            }
-            paintLink(nodeIndex.id + "left", animMultiplier++, "#ff7278")
-            nodeIndex = nodeIndex.children[0]
-
-        } else {
-            if (nodeIndex.children === undefined || matchEmpty(nodeIndex.children[1].id)) {
-                return nodeIndex
-            }
-            paintLink(nodeIndex.id + "right", animMultiplier++, "#ff7278")
-            nodeIndex = nodeIndex.children[1]
-        }
-    }
-
-    // needs to be inside here bc of animMultiplier
-    if (nodeIndex.id == value) {
-        res = paintNode(nodeIndex.id, animMultiplier++, "#23fd71")
-    }
-    return nodeIndex;
-}
-
-function insertNode() {
-    let value = document.getElementById("numberInput").value
-    if (!matchNumber(value)) {
-        alert("Wert muss Zahl < 1000 und > 0 sein!");
-        return
-    }
-
-    let nodeFound = binarySearchTree.search(value)
-    searchNodeVisually(value)
-
-    res.then(() => {
-        if (nodeFound == null) {
-            binarySearchTree.insert(new Node(new Number(value)))
-            updateHierarchy()
-            insertNewNodes(root)
-            let res1 = updatePositionForAllLinks()
-            let res2 = updatePositionForAllNodes()
-
-            res1.then(() => {
-                res2.then(() => {
-                    resetAnimation()
-                })
-            })
-        }
-        else {
-            resetAnimation()
-        }
-    })
-}
-
-function deleteNode() {
-    let value = document.getElementById("numberInput").value
-    if (!matchNumber(value)) {
-        alert("Wert muss Zahl < 1000 und > 0 sein!"); 
-        return
-    }
-
-    let nodeFound = binarySearchTree.search(value)
-    searchNodeVisually(value)
-
-    console.log(value);
-    console.log(nodeFound);
-
-    res.then(() => {
-        if (nodeFound.key == value) {
-            binarySearchTree.delete(binarySearchTree.search(value))
-            console.log("after delete");
-            updateHierarchy()
-            deleteOldNodes()
-            deleteOldLinks()
-            updateLinkIdentifiers()
-            let res1 = updatePositionForAllNodes()
-            let res2 = updatePositionForAllLinks()
-            res1.then(() => {
-                res2.then(() => {
-                    resetAnimation()
-                })
-            })
-        }
-        else {
-            resetAnimation()
-        }
-    })
-}
-
-function updatePositionForAllNodes() {
+        
+    removeElementsWithHiddenClass()
     return new Promise((resolve) => {
-        svg.selectAll("g.node")
-            .transition()
-            .duration(animDuration)
-            .attr("transform", function (d) {
-                return "translate(" + d.x + "," + d.y + ")"
+        link.transition()
+            .duration(700)
+            .attr('d', function (d) {
+                return d.id == "e" ? null :  drawDiagonalInSVG(d.parent, d)
             })
             .on("end", () => {
                 resolve()
             })
     })
+
+    //Gleiche wie bei Nodes
 }
 
-function updatePositionForAllLinks() {
-
+function updatePositionForAllElements() {
     return new Promise((resolve) => {
+        svg.selectAll("g.node")
+            .transition()
+            .duration(700)
+            .attr("transform", function (d) {
+                return `translate(${d.x}, ${d.y})`
+            })
+            .on("end", function() {
+                resolve()
+            })
+
         svg.selectAll('path.link')
             .transition()
-            .attr('d', function (d) { return drawDiagonal(d, d.parent) })
-            .on("end", () => {
+            .duration(700)
+            .attr('d', function (d) { return drawDiagonalInSVG(d.parent, d) })
+            .on("end", function() {
                 resolve()
             })
     })
@@ -220,10 +324,6 @@ function updatePositionForAllLinks() {
 
 function deleteOldNodes() {
     let nodes = root.descendants()
-
-    nodes.forEach(function (node) {
-        node.y = node.depth * 100
-    });
 
     svg.selectAll('g.node')
         .data(nodes, function (individualNode) {
@@ -254,24 +354,49 @@ function updateLinkIdentifiers() {
 }
 
 function resetAnimation() {
-    svg.selectAll("path")
-        .transition()
-        .duration(animDuration)
-        .style("stroke", null)
+    return new Promise((resolve) => {
+        svg.selectAll("path")
+            .transition()
+            .duration(700)
+            .style("stroke", null)
+            .on("end", function () {
+                resolve()
+            })
 
-    svg.selectAll("circle")
-        .transition()
-        .duration(animDuration)
-        .style("fill", null)
+        svg.selectAll("circle")
+            .transition()
+            .duration(700)
+            .style("fill", null)
+            .on("end", function () {
+                resolve()
+            })
+    })
 }
 
-function matchEmpty(value) {
-    let regex = /^empty.*$/;
-    let valueAsString = "" + value
-    if (valueAsString.match(regex)) {
-        return true
-    }
-    return false
+
+function removeElementsWithHiddenClass() {
+    d3.selectAll(".hidden")
+        .remove()
+}
+
+function paintNode(nodeID, fillColor) {
+    return new Promise((resolve) => {
+        d3.select("g#node-" + nodeID + ">circle")
+            .transition()
+            .duration(animDuration)
+            .style("fill", fillColor)
+            .on("end", function () { resolve() })
+    })
+}
+
+function paintLink(linkID, fillColor) {
+    return new Promise((resolve) => {
+        d3.select("#link-" + linkID)
+            .transition()
+            .duration(animDuration)
+            .style("stroke", fillColor)
+            .on("end", function () { resolve() })
+    })
 }
 
 function matchNumber(value) {
@@ -283,25 +408,11 @@ function matchNumber(value) {
     return false
 }
 
-function paintNode(nodeID, animMultiplier, fillColor) {
-    return new Promise((resolve) => {
-        d3.select("g#node-" + nodeID + ">circle")
-            .transition()
-            .duration(animDuration)
-            .delay(animDuration * animMultiplier)
-            .style("fill", fillColor)
-            .on("end", function () { resolve() })
-    })
+//XOR damit empty eingefügt wird
+function XOR(x, y) {
+    return (x || y) && !(x && y);
 }
 
-function paintLink(linkID, animMultiplier, fillColor) {
-
-    return new Promise((resolve) => {
-        d3.select("#link-" + linkID)
-            .transition()
-            .duration(animDuration)
-            .delay(animDuration * animMultiplier)
-            .style("stroke", fillColor)
-            .on("end", function () { resolve() })
-    })
+function drawDiagonalInSVG(start, end) {
+    return `M ${start.x} ${start.y} ${end.x} ${end.y} `;
 }
