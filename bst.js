@@ -24,7 +24,6 @@ class Node {
         this.parent = null;
         this.left = null;
         this.right = null;
-        return new Proxy(this, handler2)
     }
 }
 

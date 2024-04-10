@@ -15,7 +15,6 @@ const deleteButton = document.getElementById("deleteButton");
 const numberInput = document.getElementById("numberInput");
 
 updateHierarchy(bst)
-drawAddedNodes()
 
 insertButton.addEventListener("click", async function () {
     let value = numberInput.value
@@ -25,20 +24,22 @@ insertButton.addEventListener("click", async function () {
     await resetAnimation()
     updateHierarchy(bst)
 
-    if (value == root.data.key) {
-        deleteRootNode()
-        await drawAddedNodes()
-        return
-    }
-
     await updatePositionForExistingElements()
     await drawAddedLinks()
     await drawAddedNodes()
 })
 
-deleteButton.addEventListener("click", function () {
-    bst.deleteNode(numberInput.value)
-    deleteNode(numberInput.value)
+deleteButton.addEventListener("click", async function () {
+    let value = numberInput.value
+    bst.deleteNode(value)
+    await searchVisually(value)
+    await resetAnimation()
+    updateHierarchy(bst)
+
+    await deleteOldNodes()
+    await deleteOldLinks()
+    updatePositionForExistingElements()
+    updateLinkIdentifiers()
 })
 
 async function searchVisually(value) {
@@ -78,7 +79,6 @@ async function insert(value) {
     await updatePositionForExistingNodes()
     await drawAddedNodes()
     await drawAddedLinks()
-    updatePositionForAllElements()
 }
 
 async function deleteNode(value) {
@@ -130,8 +130,8 @@ function drawAddedNodes() {
     });
 
     var node = svg.selectAll('g.node')
-        .data(nodes, function (individualNode) {
-            return individualNode.id = individualNode.data.key
+        .data(nodes, function (d) {
+            return d.id = d.data.key
         })
         .enter()
         .append("g")
@@ -159,6 +159,7 @@ function drawAddedNodes() {
     removeElementsWithHiddenClass()
 
     return new Promise((resolve) => {
+        if (node.data().length == 0) resolve()
         node.transition()
             .duration(700)
             .style("opacity", 1)
@@ -180,16 +181,17 @@ function updatePositionForExistingElements() {
 
         //keine Links
         if (links.data().length == 0) resolve()
-        
+
         links
             .data(nodes.slice(1), function (d) {
                 return d.id = d.data.key
             })
             .transition()
             .duration(700)
-            .attr('d', function (d) { 
+            .attr('d', function (d) {
                 console.log(d.parent);
-                return drawDiagonalInSVG(d.parent, d) })
+                return drawDiagonalInSVG(d.parent, d)
+            })
 
         svg.selectAll("g.node")
             .data(nodes, function (d) {
@@ -234,13 +236,14 @@ function drawAddedLinks() {
         .attr('d', (d) => {
             return drawDiagonalInSVG(d.parent, d.parent); // Für Start der Animation
         })
-        
+
     removeElementsWithHiddenClass()
     return new Promise((resolve) => {
+        if (link.data().length == 0) resolve()
         link.transition()
             .duration(700)
             .attr('d', function (d) {
-                return d.id == "e" ? null :  drawDiagonalInSVG(d.parent, d)
+                return d.id == "e" ? null : drawDiagonalInSVG(d.parent, d)
             })
             .on("end", () => {
                 resolve()
@@ -253,22 +256,43 @@ function drawAddedLinks() {
 function deleteOldNodes() {
     let nodes = root.descendants()
 
+    return new Promise((resolve) => {
+
     svg.selectAll('g.node')
         .data(nodes, function (individualNode) {
             return individualNode.id = individualNode.data.key
         })
         .exit()
-        .remove()
+        .transition()
+        .duration(700)
+        .style("opacity", 0)
+        .on("end", function() {
+            this.remove()
+            resolve()
+        })
+    })
 }
 
 function deleteOldLinks() {
     let links = root.descendants().slice(1);
+
+    return new Promise((resolve) => {
+
     svg.selectAll('path.link')
         .data(links, function (d) {
-            return d.id;
+            return d.id = d.data.key;
         })
         .exit()
-        .remove()
+        .transition()
+        .duration(700)
+        .attr('d', function (d) {
+            return d.id == "e" ? null : drawDiagonalInSVG(d.parent, d.parent)
+        })
+        .on("end", function() {
+            this.remove()
+            resolve()
+        })
+    })
 }
 
 function updateLinkIdentifiers() {
@@ -283,6 +307,9 @@ function updateLinkIdentifiers() {
 
 function resetAnimation() {
     return new Promise((resolve) => {
+
+        if (svg.selectAll("path").data().length == 0) resolve();
+
         svg.selectAll("path")
             .transition()
             .duration(700)
@@ -309,6 +336,7 @@ function removeElementsWithHiddenClass() {
 
 function paintNode(nodeID, fillColor) {
     return new Promise((resolve) => {
+        if (nodeID == undefined) resolve()
         d3.select("g#node-" + nodeID + ">circle")
             .transition()
             .duration(animDuration)
@@ -319,6 +347,7 @@ function paintNode(nodeID, fillColor) {
 
 function paintLink(linkID, fillColor) {
     return new Promise((resolve) => {
+        console.log(linkID);
         d3.select("#link-" + linkID)
             .transition()
             .duration(animDuration)
