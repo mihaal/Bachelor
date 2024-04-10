@@ -32,9 +32,8 @@ insertButton.addEventListener("click", async function () {
     }
 
     await updatePositionForExistingElements()
-    await drawAddedNodes()
     await drawAddedLinks()
-    updatePositionForAllElements()
+    await drawAddedNodes()
 })
 
 deleteButton.addEventListener("click", function () {
@@ -91,7 +90,6 @@ async function deleteNode(value) {
     deleteOldNodes()
     deleteOldLinks()
     updateLinkIdentifiers()
-    updatePositionForAllElements()
 }
 
 async function search(value) {
@@ -170,55 +168,6 @@ function drawAddedNodes() {
     })
 }
 
-
-function updatePositionForExistingNodes() {
-    let nodes = root.descendants()
-
-    nodes.forEach(function (node) {
-        node.y = node.depth * 100
-    });
-
-    return new Promise((resolve) => {
-        svg.selectAll("g.node")
-            .data(nodes, function (individualNode) {
-                return individualNode.id = individualNode.data.key
-            })
-            .transition()
-            .duration(700)
-            .attr("transform", function (d) {
-                return `translate(${d.x}, ${d.y})`
-            })
-            .on("end", function () {
-                resolve()
-            })
-    })
-}
-
-function updatePositionForExistingLinks() {
-    let nodes = root.descendants()
-
-    nodes.forEach(function (node) {
-        node.y = node.depth * 100
-    });
-
-    console.log(root.descendants().slice(1));
-
-    return new Promise((resolve) => {
-        svg.selectAll('path.link')
-            .data(nodes.slice(1), function (d) {
-                return d.id = d.data.key
-            })
-            .transition()
-            .duration(700)
-            .attr('d', function (d) { 
-                console.log(d.parent);
-                return drawDiagonalInSVG(d.parent, d) })
-            .on("end", function () {
-                resolve()
-            })
-    })
-}
-
 function updatePositionForExistingElements() {
     let nodes = root.descendants()
 
@@ -229,6 +178,7 @@ function updatePositionForExistingElements() {
     return new Promise((resolve) => {
         let links = svg.selectAll('path.link')
 
+        //keine Links
         if (links.data().length == 0) resolve()
         
         links
@@ -298,28 +248,6 @@ function drawAddedLinks() {
     })
 
     //Gleiche wie bei Nodes
-}
-
-function updatePositionForAllElements() {
-    return new Promise((resolve) => {
-        svg.selectAll("g.node")
-            .transition()
-            .duration(700)
-            .attr("transform", function (d) {
-                return `translate(${d.x}, ${d.y})`
-            })
-            .on("end", function() {
-                resolve()
-            })
-
-        svg.selectAll('path.link')
-            .transition()
-            .duration(700)
-            .attr('d', function (d) { return drawDiagonalInSVG(d.parent, d) })
-            .on("end", function() {
-                resolve()
-            })
-    })
 }
 
 function deleteOldNodes() {
