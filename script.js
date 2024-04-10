@@ -4,7 +4,6 @@ let bst = new BinarySearchTree()
 let animDuration = 700
 let root;
 let svg = d3.select("body").insert("svg", ":first-child")
-    .attr("height", height)
     .attr("viewBox", `0 0 ${width} ${height}`)
     .append("g")
     .attr("transform", "translate(0, 40)");
@@ -15,8 +14,6 @@ const deleteButton = document.getElementById("deleteButton");
 const numberInput = document.getElementById("numberInput");
 
 updateHierarchy(bst)
-
-let numbers = []
 
 for (let index = 0; index < 10; index++) {
     bst.insert(Math.floor(Math.random() * 999));
@@ -350,10 +347,8 @@ function paintLink(linkID, fillColor) {
 function matchNumber(value) {
     let regex = /^[0-9]{1,3}$/;
     let valueAsString = "" + value
-    if (valueAsString.match(regex)) {
-        return true
-    }
-    return false
+    return valueAsString.match(regex);
+
 }
 
 //XOR damit empty eingefügt wird
