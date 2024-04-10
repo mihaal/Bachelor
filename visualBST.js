@@ -19,16 +19,12 @@ class VisualBST {
         while (node != null && node.id != value) {
             await this.#paintNode(node.id, "#ff7278")
             if (value < node.id) {
-                if (node.children == undefined || node.children[0].id == "e") {
-                    return 
-                }
+                if (this.childNotExistent(node, 0)) return
                 await this.#paintLink(node.id + "left", "#ff7278")
                 node = node.children[0]
 
             } else {
-                if (node.children == undefined || node.children[1].id == "e") {
-                    return 
-                }
+                if (this.childNotExistent(node, 1)) return
                 await this.#paintLink(node.id + "right", "#ff7278")
                 node = node.children[1]
             }
@@ -38,16 +34,19 @@ class VisualBST {
         }
     }
 
+    childNotExistent(node, child) {
+        return node.children == undefined || node.children[child].id == "e"
+    }
+
     async insert(value) {
         if (!matchNumber(value)) {
             alert("Wert muss Zahl < 1000 und > 0 sein!");
             return
         }
 
-        let foundNode = await this.searchVisually(value)
+        await this.searchVisually(value)
         await this.#resetAnimation()
 
-        // if (foundNode.id == value) return
         if (this.root.id === undefined) {
             this.#deleteRootNode()
         }
@@ -55,13 +54,12 @@ class VisualBST {
         this.#drawAddedLinks()
         this.#updatePositionForAllElements()
     }
-
     
     async deleteNode(value) {
-        let foundNode = await this.searchVisually(value)
+        await this.searchVisually(value)
         await this.#resetAnimation()
 
-        // if (foundNode.id != value) return
+
         this.updateHierarchy()
         this.#deleteOldNodes()
         this.#deleteOldLinks()
