@@ -16,7 +16,7 @@ const numberInput = document.getElementById("numberInput");
 updateHierarchy(bst)
 
 for (let index = 0; index < 10; index++) {
-    bst.insert(Math.floor(Math.random() * 999));
+    bst.insert(index);
 }
 
 insertButton.addEventListener("click", async function () {
@@ -114,18 +114,15 @@ function updateHierarchy(bst) {
         return d.children;
     });
     tree(root);
+    root.descendants().forEach(function (node) {node.y = node.depth * 100})
 }
 
 function drawAddedNodes() {
     let nodes = root.descendants()
 
-    nodes.forEach(function (node) {
-        node.y = node.depth * 100
-    });
-
-    var node = svg.selectAll('g.node')
+    let node = svg.selectAll('g.node')
         .data(nodes, function (d) {
-            return d.id = d.data.key
+            return d.data.key
         })
         .enter()
         .append("g")
@@ -166,10 +163,6 @@ function drawAddedNodes() {
 function updatePositionForExistingElements() {
     let nodes = root.descendants()
 
-    nodes.forEach(function (node) {
-        node.y = node.depth * 100
-    });
-
     return new Promise((resolve) => {
         let links = svg.selectAll('path.link')
 
@@ -205,13 +198,10 @@ function updatePositionForExistingElements() {
 function drawAddedLinks() {
     let links = root.descendants().slice(1);
 
-    links.forEach(function (node) {
-        node.y = node.depth * 100
-    });
 
     let link = svg.selectAll('path.link')
         .data(links, function (d) {
-            return d.id
+            return d.data.key
         })
         .enter()
         .insert("path", "g")
@@ -240,8 +230,6 @@ function drawAddedLinks() {
                 resolve()
             })
     })
-
-    //Gleiche wie bei Nodes
 }
 
 function deleteOldNodes() {
