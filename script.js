@@ -198,13 +198,12 @@ function updatePositionForExistingElements() {
 function drawAddedLinks() {
     let links = root.descendants().slice(1);
 
-
     let link = svg.selectAll('path.link')
         .data(links, function (d) {
             return d.data.key
         })
         .enter()
-        .insert("path", "g")
+        .insert("path")
         .attr("id", function (d) {
             if (d.id == d.parent.children[0].id) {
                 return "link-" + d.parent.id + "left"
