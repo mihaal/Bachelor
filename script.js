@@ -15,10 +15,6 @@ const numberInput = document.getElementById("numberInput");
 
 updateHierarchy(bst)
 
-for (let index = 0; index < 10; index++) {
-    bst.insert(index);
-}
-
 insertButton.addEventListener("click", async function () {
     let value = numberInput.value
     if (!matchNumber(value)) {
@@ -203,7 +199,7 @@ function drawAddedLinks() {
             return d.data.key
         })
         .enter()
-        .insert("path")
+        .insert("path", "g")
         .attr("id", function (d) {
             if (d.id == d.parent.children[0].id) {
                 return "link-" + d.parent.id + "left"
