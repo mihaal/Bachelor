@@ -2,11 +2,13 @@ let handler2 = {
     get(target, prop, receiver) {
         let value = target[prop]
         if (value instanceof Function) {
-            return async function (...args) {
-                let ret;
-                if (!(prop == "insert" || prop == "deleteNode")) {
+            if (!(prop == "insert" || prop == "deleteNode")) {
+                return function (...args) {
                     return value.apply(this === receiver ? target : this, args);
                 }
+            }
+            return async function (...args) {
+                let ret;
                 await searchVisually(args)
                 await resetAnimation()
                 ret = value.apply(this === receiver ? target : this, args);
@@ -59,7 +61,6 @@ class BinarySearchTree {
         return node
     }
 
-    //iterative
     insert(value) {
         let node = this.search(value)
         if (node != null) return
@@ -84,13 +85,30 @@ class BinarySearchTree {
         else y.right = node
     }
 
-    inOrderWalk(x) {
+    preoorderWalk(x) {
         if (x != null) {
-            this.inOrderWalk(x.left)
             console.log(x.key);
-            this.inOrderWalk(x.right)
+            this.postorderWalk(x.left)
+            this.postorderWalk(x.right)
         }
     }
+
+    inorderWalk(x) {
+        if (x != null) {
+            this.inorderWalk(x.left)
+            console.log(x.key);
+            this.inorderWalk(x.right)
+        }
+    }
+
+    postorderWalk(x) {
+        if (x != null) {
+            this.postorderWalk(x.left)
+            this.postorderWalk(x.right)
+            console.log(x.key);
+        }
+    }
+
 
     transplantSubtree(u, v) {
         if (u.parent == null) {

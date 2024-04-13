@@ -12,8 +12,14 @@ let tree = d3.tree().size([width, height]);
 const insertButton = document.getElementById("insertButton");
 const deleteButton = document.getElementById("deleteButton");
 const numberInput = document.getElementById("numberInput");
-
 updateHierarchy(bst)
+bst.insert(4)
+bst.insert(2)
+bst.insert(6)
+bst.insert(1)
+bst.insert(3)
+bst.insert(5)
+bst.insert(7)
 
 insertButton.addEventListener("click", async function () {
     let value = numberInput.value
@@ -36,26 +42,26 @@ deleteButton.addEventListener("click", async function () {
 
 async function searchVisually(value) {
     let node = root;
-    while (node != null && node.id != value) {
-        await paintNode(node.id, "#ff7278")
-        if (value < node.id) {
+    while (node != null && node.data.key != value) {
+        await paintNode(node.data.key, "#ff7278")
+        if (value < node.data.key) {
             if (childNotExistent(node, 0)) return
-            await paintLink(node.id + "left", "#ff7278")
+            await paintLink(node.data.key + "left", "#ff7278")
             node = node.children[0]
 
         } else {
             if (childNotExistent(node, 1)) return
-            await paintLink(node.id + "right", "#ff7278")
+            await paintLink(node.data.key + "right", "#ff7278")
             node = node.children[1]
         }
     }
-    if (node.id == value) {
-        await paintNode(node.id, "#23fd71")
+    if (node.data.key == value) {
+        await paintNode(node.data.key, "#23fd71")
     }
 }
 
 function childNotExistent(node, child) {
-    return node.children == undefined || node.children[child].id == "e"
+    return node.children == undefined || node.children[child].data.key == "e"
 }
 
 //Löschen
@@ -123,10 +129,10 @@ function drawAddedNodes() {
         .enter()
         .append("g")
         .attr("id", (d) => {
-            return "node-" + d.id
+            return "node-" + d.data.key
         })
         .attr("class", function (d) {
-            return d.id == "e" ? "hidden" : "node"
+            return d.data.key == "e" ? "hidden" : "node"
         })
         .attr("transform", (d) => {
             return `translate(${d.x}, ${d.y})`
@@ -141,7 +147,7 @@ function drawAddedNodes() {
     node.append("text")
         .attr("dy", ".35em")
         .attr("text-anchor", "middle")
-        .text((d) => { return d.id });
+        .text((d) => { return d.data.key });
 
     removeElementsWithHiddenClass()
 
@@ -167,7 +173,7 @@ function updatePositionForExistingElements() {
 
         links
             .data(nodes.slice(1), function (d) {
-                return d.id = d.data.key
+                return d.data.key
             })
             .transition()
             .duration(700)
@@ -177,7 +183,7 @@ function updatePositionForExistingElements() {
 
         svg.selectAll("g.node")
             .data(nodes, function (d) {
-                return d.id = d.data.key
+                return d.data.key
             })
             .transition()
             .duration(700)
@@ -201,13 +207,13 @@ function drawAddedLinks() {
         .enter()
         .insert("path", "g")
         .attr("id", function (d) {
-            if (d.id == d.parent.children[0].id) {
-                return "link-" + d.parent.id + "left"
+            if (d.data.key == d.parent.children[0].data.key) {
+                return "link-" + d.parent.data.key + "left"
             }
-            return "link-" + d.parent.id + "right"
+            return "link-" + d.parent.data.key + "right"
         })
         .attr("class", function (d) {
-            return d.id == "e" ? "hidden" : "link"
+            return d.data.key == "e" ? "hidden" : "link"
         })
         .attr('d', (d) => {
             return drawDiagonalInSVG(d.parent, d.parent); // Für Start der Animation
@@ -219,7 +225,7 @@ function drawAddedLinks() {
         link.transition()
             .duration(700)
             .attr('d', function (d) {
-                return d.id == "e" ? null : drawDiagonalInSVG(d.parent, d)
+                return d.data.key == "e" ? null : drawDiagonalInSVG(d.parent, d)
             })
             .on("end", () => {
                 resolve()
@@ -234,7 +240,7 @@ function deleteOldNodes() {
 
     svg.selectAll('g.node')
         .data(nodes, function (individualNode) {
-            return individualNode.id = individualNode.data.key
+            return individualNode.data.key
         })
         .exit()
         .transition()
@@ -254,13 +260,13 @@ function deleteOldLinks() {
 
     svg.selectAll('path.link')
         .data(links, function (d) {
-            return d.id = d.data.key;
+            return d.data.key;
         })
         .exit()
         .transition()
         .duration(700)
         .attr('d', function (d) {
-            return d.id == "e" ? null : drawDiagonalInSVG(d.parent, d.parent)
+            return d.data.key == "e" ? null : drawDiagonalInSVG(d.parent, d.parent)
         })
         .on("end", function() {
             this.remove()
@@ -272,10 +278,10 @@ function deleteOldLinks() {
 function updateLinkIdentifiers() {
     svg.selectAll('path.link')
         .attr("id", function (d) {
-            if (d.id == d.parent.children[0].id) {
-                return "link-" + d.parent.id + "left"
+            if (d.data.key == d.parent.children[0].data.key) {
+                return "link-" + d.parent.data.key + "left"
             }
-            return "link-" + d.parent.id + "right"
+            return "link-" + d.parent.data.key + "right"
         })
 }
 
