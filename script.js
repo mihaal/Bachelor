@@ -17,6 +17,7 @@ updateHierarchy(bst)
 bst.insert(5)
 bst.insert(8)
 bst.insert(2)
+bst.insert(4)
 
 insertButton.addEventListener("click", async function () {
     let value = numberInput.value
@@ -108,7 +109,7 @@ function updateHierarchy(bst) {
         return d.children;
     });
     tree(root);
-    root.descendants().forEach(function (node) {node.y = node.depth * 100})
+    root.descendants().forEach(function (node) { node.y = node.depth * 100 })
 }
 
 function drawAddedNodes() {
@@ -154,7 +155,7 @@ function drawAddedNodes() {
     })
 }
 
-function updatePositionForExistingElements() {
+function updateExistingElements() {
     let nodes = root.descendants()
 
     return new Promise((resolve) => {
@@ -211,7 +212,7 @@ function drawAddedLinks() {
             return drawDiagonalInSVG(d.parent, d.parent); // Für Start der Animation
         })
     removeElementsWithHiddenClass()
-    
+
     return new Promise((resolve) => {
         if (link.data().length == 0) resolve()
         link.transition()
@@ -230,18 +231,18 @@ function deleteOldNodes() {
 
     return new Promise((resolve) => {
 
-    svg.selectAll('g.node')
-        .data(nodes, function (individualNode) {
-            return individualNode.data.key
-        })
-        .exit()
-        .transition()
-        .duration(700)
-        .style("opacity", 0)
-        .on("end", function() {
-            this.remove()
-            resolve()
-        })
+        svg.selectAll('g.node')
+            .data(nodes, function (d) {
+                return d.data.key
+            })
+            .exit()
+            .transition()
+            .duration(700)
+            .style("opacity", 0)
+            .on("end", function () {
+                this.remove()
+                resolve()
+            })
     })
 }
 
@@ -250,20 +251,20 @@ function deleteOldLinks() {
 
     return new Promise((resolve) => {
 
-    svg.selectAll('path.link')
-        .data(links, function (d) {
-            return d.data.key;
-        })
-        .exit()
-        .transition()
-        .duration(700)
-        .attr('d', function (d) {
-            return d.data.key == "e" ? null : drawDiagonalInSVG(d.parent, d.parent)
-        })
-        .on("end", function() {
-            this.remove()
-            resolve()
-        })
+        svg.selectAll('path.link')
+            .data(links, function (d) {
+                return d.data.key;
+            })
+            .exit()
+            .transition()
+            .duration(700)
+            .attr('d', function (d) {
+                return d.data.key == "e" ? null : drawDiagonalInSVG(d.parent, d.parent)
+            })
+            .on("end", function () {
+                this.remove()
+                resolve()
+            })
     })
 }
 
@@ -286,7 +287,7 @@ function resetAnimation() {
             .transition()
             .duration(700)
             .style("stroke", null)
-            
+
 
         svg.selectAll("circle")
             .transition()

@@ -21,15 +21,15 @@ let handler2 = {
 
                 switch (prop) {
                     case "insert":
-                        await updatePositionForExistingElements()
+                        await updateExistingElements()
                         await drawAddedLinks()
                         await drawAddedNodes()
                         return ret;
                     case "deleteNode":
                         await deleteOldNodes()
                         await deleteOldLinks()
-                        updatePositionForExistingElements()
-                        updateLinkIdentifiers()
+                        updateExistingElements()
+                        // updateLinkIdentifiers()
                         return ret
                 }
             }
