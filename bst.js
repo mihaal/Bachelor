@@ -2,16 +2,21 @@ let handler2 = {
     get(target, prop, receiver) {
         let value = target[prop]
         if (value instanceof Function) {
-            if (!(prop == "insert" || prop == "deleteNode")) {
+            if (!(prop == "insert" || prop == "deleteNode" || prop == "search")) {
                 return function (...args) {
                     return value.apply(this === receiver ? target : this, args);
                 }
             }
             return async function (...args) {
+                if (!matchNumber(args)) {
+                    alert("Wert muss Zahl < 1000 und > 0 sein!");
+                    return
+                }
                 let ret;
                 await searchVisually(args)
                 await resetAnimation()
                 ret = value.apply(this === receiver ? target : this, args);
+                if (prop == "search") return
                 updateHierarchy(target)
 
                 switch (prop) {
@@ -85,11 +90,11 @@ class BinarySearchTree {
         else y.right = node
     }
 
-    preoorderWalk(x) {
+    preorderWalk(x) {
         if (x != null) {
             console.log(x.key);
-            this.postorderWalk(x.left)
-            this.postorderWalk(x.right)
+            this.preorderWalk(x.left)
+            this.preorderWalk(x.right)
         }
     }
 

@@ -11,33 +11,25 @@ let tree = d3.tree().size([width, height]);
 
 const insertButton = document.getElementById("insertButton");
 const deleteButton = document.getElementById("deleteButton");
+const searchButton = document.getElementById("searchButton");
 const numberInput = document.getElementById("numberInput");
 updateHierarchy(bst)
-bst.insert(4)
-bst.insert(2)
-bst.insert(6)
-bst.insert(1)
-bst.insert(3)
 bst.insert(5)
-bst.insert(7)
+bst.insert(8)
+bst.insert(2)
 
 insertButton.addEventListener("click", async function () {
     let value = numberInput.value
-    if (!matchNumber(value)) {
-        alert("Wert muss Zahl < 1000 und > 0 sein!");
-        return
-    }
-
     bst.insert(value)
 })
 
 deleteButton.addEventListener("click", async function () {
     let value = numberInput.value
-    if (!matchNumber(value)) {
-        alert("Wert muss Zahl < 1000 und > 0 sein!");
-        return
-    }
     bst.deleteNode(value)
+})
+searchButton.addEventListener("click", async function () {
+    let value = numberInput.value
+    bst.search(value)
 })
 
 async function searchVisually(value) {
