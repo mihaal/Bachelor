@@ -1,4 +1,4 @@
-let handler2 = {
+let handler = {
     get(target, prop, receiver) {
         let value = target[prop]
         if (value instanceof Function) {
@@ -28,8 +28,8 @@ let handler2 = {
                     case "deleteNode":
                         await deleteOldNodes()
                         await deleteOldLinks()
-                        updateExistingElements()
-                        // updateLinkIdentifiers()
+                        await updateExistingElements()
+                        updateLinkIdentifiers()
                         return ret
                 }
             }
@@ -50,7 +50,7 @@ class Node {
 class BinarySearchTree {
     constructor() {
         this.root = null;
-        return new Proxy(this, handler2)
+        return new Proxy(this, handler)
     }
 
     search(key) {

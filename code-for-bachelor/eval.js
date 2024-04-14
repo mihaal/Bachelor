@@ -1,14 +1,12 @@
-function observeChanges(callback) {
-    const array = [];
-    return new Proxy(array, {
-        set(obj, prop, value) {
-            callback(prop, value);
-            obj[prop] = value;
-            return true;
-        }
-    });    
+let otherArray = []
+let handler = {
+    set(obj, prop, value) {
+        obj[prop] = value
+        otherArray[prop] = value
+        return true
+    }
 }
-const observedArray = observeChanges(
-    (key, value) => console.log(`${key}=${value}`));
-observedArray.push('a'); // 0=a
-                         // length=1
+const proxy = new Proxy([], handler);
+proxy.push('a');
+proxy.push('b');
+console.log(otherArray); // [ 'a', 'b' ]
