@@ -271,7 +271,6 @@ function removeElementsWithHiddenClass() {
 
 async function paintNode(nodeID, fillColor) {
 
-    if (nodeID == undefined) return
     await svg.select("g#node-" + nodeID + ">circle")
         .transition()
         .duration(animDuration)
