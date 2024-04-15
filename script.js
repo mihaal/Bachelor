@@ -53,41 +53,6 @@ function childNotExistent(node, child) {
     return node.children == undefined || node.children[child].data.key == "e"
 }
 
-//Löschen
-async function insert(value) {
-    if (!matchNumber(value)) {
-        alert("Wert muss Zahl < 1000 und > 0 sein!");
-        return
-    }
-
-    await searchVisually(value)
-    await resetAnimation()
-    bst.insert(value)
-    updateHierarchy(bst)
-
-    await updatePositionForExistingNodes()
-    await drawAddedNodes()
-    await drawAddedLinks()
-}
-
-//Löschen
-async function deleteNode(value) {
-    await searchVisually(value)
-    await resetAnimation()
-    bst.deleteNode(value)
-
-    updateHierarchy(bst)
-    deleteOldNodes()
-    deleteOldLinks()
-    updateLinkIdentifiers()
-}
-
-//Löschen
-async function search(value) {
-    await searchVisually(value)
-    resetAnimation()
-}
-
 function updateHierarchy(bst) {
     root = d3.hierarchy(bst.root == null ? {} : bst.root, function (d) {
         d.children = [];
